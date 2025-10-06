@@ -1,4 +1,4 @@
-<img width="640" height="480" alt="image" src="https://github.com/user-attachments/assets/5433c2f1-48ff-478f-a191-774754e0947b" /># SARS: Servicio de Apoyo para Release de Series
+# SARS: Servicio de Apoyo para Release de Series
 
 En este repositorio se aloja un servicio orientado a la gestión de _releases_ de series.
 Cada temporada de la serie es un proyecto. Cada proyecto lo lleva un grupo, y cada usuario forma parte de un grupo.
