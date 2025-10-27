@@ -25,8 +25,8 @@ public class Capitulo {
     @ManyToMany
     @JoinTable(
         name = "cart_products",
-        joinColumns = @JoinColumn(name = "cart_id"),
-        inverseJoinColumns = @JoinColumn(name = "product_id")
+        joinColumns = @JoinColumn(name = "nCapitulo"),
+        inverseJoinColumns = @JoinColumn(name = "nTarea")
     )
 	private Set<Tarea> tareas = new HashSet<>();
 	
