@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.JoinColumn;
 
@@ -28,7 +29,13 @@ public class Capitulo {
         joinColumns = @JoinColumn(name = "nCapitulo"),
         inverseJoinColumns = @JoinColumn(name = "nTarea")
     )
-	private Set<Tarea> tareas = new HashSet<>();
+	
+    //clave de qué serie forma parte
+    @ManyToOne
+    @JoinColumn(name = "cart_id")
+    private Serie serie;
+    
+    private Set<Tarea> tareas = new HashSet<>();
 	
 	public Capitulo (String n) {
 		this.nombre=n;
