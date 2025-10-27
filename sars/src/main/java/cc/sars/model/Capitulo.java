@@ -24,7 +24,7 @@ public class Capitulo {
 
     @ManyToMany
     @JoinTable(
-        name = "cart_products",
+        name = "tareasCapitulo",
         joinColumns = @JoinColumn(name = "nCapitulo"),
         inverseJoinColumns = @JoinColumn(name = "nTarea")
     )
