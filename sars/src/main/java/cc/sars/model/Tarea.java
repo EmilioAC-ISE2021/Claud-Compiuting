@@ -20,6 +20,7 @@ public class Tarea {
 	@JsonProperty("usuarioAsignado") 
 	@Column(name = "usuario")
     private String usuario="NADIE";
+	@JsonProperty("estado") 
 	@Column (name = "estadoTarea")
     private EstadosTareas estado=EstadosTareas.NoAsignado;
 	
