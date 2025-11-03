@@ -1,7 +1,8 @@
 package cc.sars.model;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+
+import java.util.List;
+import java.util.ArrayList;    
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
@@ -12,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.OrderColumn; 
 
 @Entity
 @Table(name = "capitulo")
@@ -30,9 +32,10 @@ public class Capitulo {
         name = "capitulo_tareas", 
         joinColumns = @JoinColumn(name = "capitulo_nombre")
     )
-    private Set<Tarea> tareas = new LinkedHashSet<>();
+    @OrderColumn(name = "tarea_indice")
+    private List<Tarea> tareas = new ArrayList<>(); // Ahora es una List
 
-    // Constructor vacío
+
     public Capitulo() {
     }
 
@@ -40,20 +43,20 @@ public class Capitulo {
         this.nombre = n;
     }
 
-    // --- MÉTODO SOLICITADO ---
-
     public void anyadirTarea(Tarea t) {
-        this.tareas.add(t); // El Set se encarga de no duplicar
+        if (!this.tareas.contains(t)) {
+            this.tareas.add(t);
+        }
     }
 
-    // --- Otros métodos ---
     public void quitarTarea(Tarea t) {
         this.tareas.remove(t);
     }
     
-    public Set<Tarea> getTareas() {
+    public List<Tarea> getTareas() {
         return tareas;
     }
+    
     public String getNombre() {
         return nombre;
     }

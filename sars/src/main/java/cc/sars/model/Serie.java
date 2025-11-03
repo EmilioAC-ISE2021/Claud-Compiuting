@@ -1,7 +1,7 @@
 package cc.sars.model;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.List;         
+import java.util.ArrayList;    
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.CascadeType;
@@ -9,6 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.OrderColumn; 
 
 @Entity
 @Table(name = "serie")
@@ -22,9 +23,10 @@ public class Serie {
 
     @JsonProperty("capitulos")
     @OneToMany(mappedBy = "serie", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Capitulo> capitulos = new LinkedHashSet<>();
+    @OrderColumn(name = "capitulo_indice")
+    private List<Capitulo> capitulos = new ArrayList<>(); // Ahora es una List
 
-    // Constructor vacío
+    // --- Constructor vacío ---
     public Serie() {
     }
 
@@ -33,24 +35,26 @@ public class Serie {
         this.descripcion = d;
     }
 
-    // --- MÉTODO SOLICITADO ---
-
-    /**
-     * Añade un capítulo a la serie.
-     * Importante: También establece la referencia 'serie' dentro del capítulo
-     * para mantener la consistencia de la relación bidireccional.
-     */
-    public void addCapitulo(Capitulo capitulo) {
-        this.capitulos.add(capitulo); // El Set evita duplicados
-        capitulo.setSerie(this);
+    public Serie(String n, String d, List<Capitulo> c) {
+        this.nombre = n;
+        this.descripcion = d;
+        c.forEach(this::addCapitulo); 
     }
 
-    // --- Otros métodos ---
+    public void addCapitulo(Capitulo capitulo) {
+        if (!this.capitulos.contains(capitulo)) {
+            this.capitulos.add(capitulo);
+            capitulo.setSerie(this);
+        }
+    }
+
+    // (removeCapitulo funciona igual con List)
     public void removeCapitulo(Capitulo capitulo) {
         this.capitulos.remove(capitulo);
         capitulo.setSerie(null);
     }
 
+    // --- (Getters y Setters sin cambios, excepto el tipo de 'getCapitulos') ---
     public String getNombre() {
         return nombre;
     }
@@ -61,11 +65,13 @@ public class Serie {
     public String getDescripcion() {
         return this.descripcion;
     }
-    public Set<Capitulo> getCapitulos() {
+
+    // --- CAMBIO 6: El getter devuelve List ---
+    public List<Capitulo> getCapitulos() {
         return capitulos;
     }
 
-    // --- equals y hashCode (basados en el nombre) ---
+    // --- equals y hashCode (sin cambios) ---
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
