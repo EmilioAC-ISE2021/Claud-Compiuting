@@ -12,8 +12,12 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/index", "/index.html", "/hello", "/css/**", "/js/**").permitAll()
-                .anyRequest().authenticated()
+                .requestMatchers(
+                    "/", "/index", "/index.html", "/hello", "/css/**", "/js/**", 
+                    "/crear-serie", 
+                    "/serie/**" 
+                ).permitAll() // Permite todas las anteriores sin login
+                .anyRequest().authenticated() // Requiere login para cualquier otra ruta
             )
             .formLogin(Customizer.withDefaults());
         return http.build();

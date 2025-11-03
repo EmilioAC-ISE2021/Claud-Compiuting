@@ -23,7 +23,7 @@
         <h1>Gestor de Series</h1>
 
         <h2>Crear Nueva Serie</h2>
-        <form method="post" action="/crear-serie">
+        <form method="post" th:action="@{/crear-serie}">
             <div>
                 <label for="nombre">Nombre de la Serie:</label>
                 <input type="text" id="nombre" name="nombre" required>
