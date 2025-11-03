@@ -1,6 +1,6 @@
 package cc.sars.model;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,7 +30,7 @@ public class Capitulo {
         name = "capitulo_tareas", 
         joinColumns = @JoinColumn(name = "capitulo_nombre")
     )
-    private Set<Tarea> tareas = new HashSet<>();
+    private Set<Tarea> tareas = new LinkedHashSet<>();
 
     // Constructor vacío
     public Capitulo() {

@@ -1,6 +1,6 @@
 package cc.sars.model;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,7 +22,7 @@ public class Serie {
 
     @JsonProperty("capitulos")
     @OneToMany(mappedBy = "serie", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Capitulo> capitulos = new HashSet<>();
+    private Set<Capitulo> capitulos = new LinkedHashSet<>();
 
     // Constructor vacío
     public Serie() {
