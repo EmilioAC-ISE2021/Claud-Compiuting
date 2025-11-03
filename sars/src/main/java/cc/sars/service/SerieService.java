@@ -149,4 +149,22 @@ public class SerieService {
     public List<EstadosTareas> getTodosLosEstados() {
         return Arrays.asList(EstadosTareas.values());
     }
+    
+    public Capitulo updateTareaUsuario(String nombreCapitulo, String nombreTarea, String nuevoUsuario) {
+        // 1. Encontrar el capítulo
+        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+                .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
+
+        // 2. Encontrar la tarea específica
+        Tarea tareaAActualizar = capitulo.getTareas().stream()
+                .filter(tarea -> tarea.getNombre().equals(nombreTarea))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No se encontró la tarea: " + nombreTarea));
+
+        // 3. Actualizar el usuario
+        tareaAActualizar.setUsuarioAsignado(nuevoUsuario);
+
+        // 4. Guardar la entidad padre (Capitulo)
+        return capituloRepository.save(capitulo);
+    }
 }
