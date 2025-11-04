@@ -3,29 +3,31 @@ package cc.sars.model;
 import java.util.List;         
 import java.util.ArrayList;    
 import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.OrderColumn; 
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "serie")
 public class Serie {
 
-    @Id
+	@Id
     @JsonProperty("nombreSerie")
     private String nombre;
 
     private String descripcion;
-
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grupo_nombre") // Apunta a Grupo.nombre
+    @JsonIgnore 
+    private Grupo grupo;
+    
     @JsonProperty("capitulos")
     @OneToMany(mappedBy = "serie", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn(name = "capitulo_indice")
-    private List<Capitulo> capitulos = new ArrayList<>(); // Ahora es una List
-
+    private List<Capitulo> capitulos = new ArrayList<>();
+    
     // --- Constructor vacío ---
     public Serie() {
     }
@@ -48,13 +50,11 @@ public class Serie {
         }
     }
 
-    // (removeCapitulo funciona igual con List)
     public void removeCapitulo(Capitulo capitulo) {
         this.capitulos.remove(capitulo);
         capitulo.setSerie(null);
     }
 
-    // --- (Getters y Setters sin cambios, excepto el tipo de 'getCapitulos') ---
     public String getNombre() {
         return nombre;
     }
@@ -66,12 +66,13 @@ public class Serie {
         return this.descripcion;
     }
 
-    // --- CAMBIO 6: El getter devuelve List ---
     public List<Capitulo> getCapitulos() {
         return capitulos;
     }
+    
+    public Grupo getGrupo() { return grupo; }
+    public void setGrupo(Grupo grupo) { this.grupo = grupo; }
 
-    // --- equals y hashCode (sin cambios) ---
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
