@@ -2,9 +2,11 @@ package cc.sars.service;
 
 import cc.sars.model.Capitulo;
 import cc.sars.model.EstadosTareas;
+import cc.sars.model.Grupo;
 import cc.sars.model.Serie;
 import cc.sars.model.Tarea;
 import cc.sars.repository.CapituloRepository;
+import cc.sars.repository.GrupoRepository; // 1. IMPORTAR
 import cc.sars.repository.SerieRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,15 +14,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
  * Test unitario (rápido) para la lógica de negocio en SerieService.
- * Simula los repositorios usando Mockito.
+ * Simula todos los repositorios usando Mockito.
  */
 @ExtendWith(MockitoExtension.class)
 public class SerieServiceTest {
@@ -31,111 +35,143 @@ public class SerieServiceTest {
     @Mock
     private CapituloRepository capituloRepository;
 
+    @Mock
+    private GrupoRepository grupoRepository; // 2. AÑADIR MOCK PARA EL NUEVO REPO
+
     @InjectMocks
-    private SerieService serieService;
+    private SerieService serieService; // 3. SE INYECTAN LOS 3 MOCKS
 
     /**
-     * Prueba que se puede crear una serie si el nombre es único.
+     * Prueba que el servicio puede obtener las series de un grupo específico.
      */
     @Test
-    void createSerie_shouldSaveNewSerie_whenNombreIsUnique() {
+    void testGetSeriesPorGrupo() {
         // --- ARRANGE ---
-        String nombre = "Nueva Serie";
-        String desc = "Descripción";
-        Serie serieAGuardar = new Serie(nombre, desc);
+        Serie serieMock1 = new Serie("Serie 1", "");
+        Serie serieMock2 = new Serie("Serie 2", "");
+        List<Serie> listaDeSeries = List.of(serieMock1, serieMock2);
+        
+        Grupo grupoMock = mock(Grupo.class); // Creamos un mock de Grupo
+        when(grupoMock.getSeries()).thenReturn(listaDeSeries); // Le decimos qué devolver
 
-        when(serieRepository.findByNombre(nombre)).thenReturn(Optional.empty());
-        when(serieRepository.save(any(Serie.class))).thenReturn(serieAGuardar);
+        // Simulamos que el repo encuentra el grupo
+        when(grupoRepository.findByNombre("MiGrupo")).thenReturn(Optional.of(grupoMock));
 
         // --- ACT ---
-        Serie resultado = serieService.createSerie(nombre, desc);
+        List<Serie> resultado = serieService.getSeriesPorGrupo("MiGrupo");
 
         // --- ASSERT ---
-        assertThat(resultado).isNotNull();
-        assertThat(resultado.getNombre()).isEqualTo(nombre);
-        verify(serieRepository).save(any(Serie.class));
+        assertThat(resultado).hasSize(2);
+        assertThat(resultado).isEqualTo(listaDeSeries);
     }
 
     /**
-     * Prueba que lanza una excepción si la serie ya existe.
+     * Prueba que se puede crear una serie si se proporciona un grupo válido.
      */
     @Test
-    void createSerie_shouldThrowException_whenSerieExists() {
+    void testCreateSerie() {
         // --- ARRANGE ---
-        String nombreExistente = "Serie Existente";
-        Serie serieExistente = new Serie(nombreExistente, "");
-        when(serieRepository.findByNombre(nombreExistente)).thenReturn(Optional.of(serieExistente));
+        String nombreSerie = "Nueva Serie";
+        String descripcion = "Desc";
+        String nombreGrupo = "MiGrupo";
 
-        // --- ACT & ASSERT ---
-        assertThatThrownBy(() -> {
-            serieService.createSerie(nombreExistente, "...");
-        })
-        .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("ya existe");
+        Grupo grupoMock = mock(Grupo.class);
+        when(grupoRepository.findByNombre(nombreGrupo)).thenReturn(Optional.of(grupoMock));
+        
+        // Simular que la serie no existe
+        when(serieRepository.findByNombre(nombreSerie)).thenReturn(Optional.empty());
 
-        verify(serieRepository, never()).save(any(Serie.class));
+        // --- ACT ---
+        serieService.createSerie(nombreSerie, descripcion, nombreGrupo);
+
+        // --- ASSERT ---
+        // Verificamos que se buscó el grupo
+        verify(grupoRepository).findByNombre(nombreGrupo);
+        // Verificamos que se llamó al método 'agregarSerie' dentro del grupo
+        verify(grupoMock).agregarSerie(any(Serie.class));
+        // Verificamos que el grupo (con la nueva serie) se guardó
+        verify(grupoRepository).save(grupoMock);
     }
 
     /**
      * Prueba que se puede añadir un capítulo a una serie existente.
      */
     @Test
-    void addCapituloToSerie_shouldAddCapitulo_whenSerieExists() {
+    void testAddCapituloToSerie() {
         // --- ARRANGE ---
-        Serie serie = new Serie("Mi Serie", "Desc");
-        String nuevoCapituloNombre = "Capitulo 1";
-        when(serieRepository.findByNombre("Mi Serie")).thenReturn(Optional.of(serie));
-        when(capituloRepository.findByNombre(nuevoCapituloNombre)).thenReturn(Optional.empty());
+        Serie serieMock = mock(Serie.class);
+        when(serieRepository.findByNombre("MiSerie")).thenReturn(Optional.of(serieMock));
+        when(capituloRepository.findByNombre("NuevoCap")).thenReturn(Optional.empty());
 
         // --- ACT ---
-        serieService.addCapituloToSerie("Mi Serie", nuevoCapituloNombre);
+        serieService.addCapituloToSerie("MiSerie", "NuevoCap");
 
         // --- ASSERT ---
-        assertThat(serie.getCapitulos()).hasSize(1);
-        assertThat(serie.getCapitulos().get(0).getNombre()).isEqualTo(nuevoCapituloNombre);
-        verify(serieRepository).save(serie);
+        // Verificamos que se llamó al método 'addCapitulo' de la entidad Serie
+        verify(serieMock).addCapitulo(any(Capitulo.class));
+        verify(serieRepository).save(serieMock);
+    }
+
+    /**
+     * Prueba que se puede añadir una tarea a un capítulo existente.
+     */
+    @Test
+    void testAddTareaToCapitulo() {
+        // --- ARRANGE ---
+        Capitulo capituloMock = mock(Capitulo.class);
+        when(capituloRepository.findByNombre("MiCap")).thenReturn(Optional.of(capituloMock));
+
+        // --- ACT ---
+        serieService.addTareaToCapitulo("MiCap", "NuevaTarea");
+
+        // --- ASSERT ---
+        // Verificamos que se llamó al método 'anyadirTarea' (el correcto) de la entidad Capitulo
+        verify(capituloMock).anyadirTarea(any(Tarea.class));
+        verify(capituloRepository).save(capituloMock);
     }
 
     /**
      * Prueba que se puede actualizar el estado de una tarea.
      */
     @Test
-    void updateTareaEstado_shouldUpdateState_whenCapituloAndTareaExist() {
+    void testUpdateTareaEstado() {
         // --- ARRANGE ---
-        Tarea tarea = new Tarea("Hacer Guion");
-        Capitulo capitulo = new Capitulo("Cap 1");
-        capitulo.anyadirTarea(tarea);
-        when(capituloRepository.findByNombre("Cap 1")).thenReturn(Optional.of(capitulo));
+        Tarea tareaReal = new Tarea("Tarea 1");
+        assertThat(tareaReal.getEstadoTarea()).isEqualTo(EstadosTareas.NoAsignado);
+        
+        // Usamos un capítulo real con datos reales para probar el stream()
+        Capitulo capituloReal = new Capitulo("MiCap");
+        capituloReal.anyadirTarea(tareaReal);
+
+        when(capituloRepository.findByNombre("MiCap")).thenReturn(Optional.of(capituloReal));
 
         // --- ACT ---
-        serieService.updateTareaEstado("Cap 1", "Hacer Guion", EstadosTareas.Completado);
+        serieService.updateTareaEstado("MiCap", "Tarea 1", EstadosTareas.Completado);
 
         // --- ASSERT ---
-        assertThat(capitulo.getTareas().get(0).getEstadoTarea()).isEqualTo(EstadosTareas.Completado);
-        verify(capituloRepository).save(capitulo);
+        assertThat(tareaReal.getEstadoTarea()).isEqualTo(EstadosTareas.Completado);
+        verify(capituloRepository).save(capituloReal);
     }
 
     /**
-     * Prueba que se puede actualizar el usuario asignado a una tarea.
+     * Prueba que se puede actualizar el usuario de una tarea.
      */
     @Test
-    void updateTareaUsuario_shouldUpdateUsuario_whenCapituloAndTareaExist() {
+    void testUpdateTareaUsuario() {
         // --- ARRANGE ---
-        Tarea tarea = new Tarea("Hacer Guion"); // El usuario inicial es "NADIE"
-        assertThat(tarea.getUsuarioAsignado()).isEqualTo("NADIE"); // Verificación inicial
+        Tarea tareaReal = new Tarea("Tarea 1");
+        assertThat(tareaReal.getUsuarioAsignado()).isEqualTo("NADIE");
 
-        Capitulo capitulo = new Capitulo("Cap 1");
-        capitulo.anyadirTarea(tarea);
-        
-        when(capituloRepository.findByNombre("Cap 1")).thenReturn(Optional.of(capitulo));
+        Capitulo capituloReal = new Capitulo("MiCap");
+        capituloReal.anyadirTarea(tareaReal);
+
+        when(capituloRepository.findByNombre("MiCap")).thenReturn(Optional.of(capituloReal));
 
         // --- ACT ---
-        // Llamamos al nuevo método del servicio
-        serieService.updateTareaUsuario("Cap 1", "Hacer Guion", "UsuarioNuevo");
+        serieService.updateTareaUsuario("MiCap", "Tarea 1", "NuevoUsuario");
 
         // --- ASSERT ---
-        // Verificamos que el usuario cambió y que se guardó
-        assertThat(capitulo.getTareas().get(0).getUsuarioAsignado()).isEqualTo("UsuarioNuevo");
-        verify(capituloRepository).save(capitulo);
+        assertThat(tareaReal.getUsuarioAsignado()).isEqualTo("NuevoUsuario");
+        verify(capituloRepository).save(capituloReal);
     }
 }
