@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(content=~{::content}, titulo='Gestionar Grupo')}">
+
+<th:block th:fragment="content">
+
+    <a th:href="@{/}" class="btn btn-outline-secondary btn-sm mb-3">&larr; Volver al Dashboard</a>
+    
+    <h2 class="mb-4">
+        Gestionar Grupo: <span class="fw-bold" th:text="${grupo.nombre}">Nombre del Grupo</span>
+    </h2>
+
+    <div class="row">
+        <div class="col-md-5">
+            <h4>Añadir Usuario al Grupo</h4>
+            <form th:action="@{/grupo/gestionar/agregar}" method="post" class="card p-3">
+                <div class="mb-3">
+                    <label for="nombreUsuario" class="form-label">Selecciona un usuario:</label>
+                    <select class="form-select" id="nombreUsuario" name="nombreUsuario" required>
+                        <option value="" disabled selected>-- Usuarios disponibles --</option>
+                        
+                        <option th:each="usuario : ${usuariosDisponibles}"
+                                th:value="${usuario.username}"
+                                th:text="${usuario.username}">
+                            username.del.usuario
+                        </option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Añadir al Grupo</button>
+            </form>
+        </div>
+
+        <div class="col-md-7">
+            <h4>Miembros Actuales del Grupo</h4>
+            <ul class="list-group">
+                <li th:each="usuario : ${usuariosEnGrupo}" class="list-group-item d-flex justify-content-between align-items-center">
+                    <span th:text="${usuario.username}">username.miembro</span>
+                    <span classs="badge bg-secondary rounded-pill" 
+                          th:text="${usuario.role.name() == 'ROLE_LIDER' ? 'Líder' : 'Usuario'}">
+                        Rol
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+</th:block>
+</html>

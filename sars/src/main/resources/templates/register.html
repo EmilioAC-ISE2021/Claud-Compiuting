@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout(content=~{::content}, titulo='Registro')}">
+
+<th:block th:fragment="content">
+
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <h2 class="mb-4">Crear Cuenta</h2>
+
+            <div th:if="${error_message}" class="alert alert-danger" role="alert">
+                [[${error_message}]]
+            </div>
+
+            <form th:action="@{/register}" method="post">
+                
+                <div class="mb-3">
+                    <label for="nombreUsuario" class="form-label">Nombre de Usuario</label>
+                    <input type="text" class="form-control" id="nombreUsuario" name="nombreUsuario" required>
+                </div>
+                <div class="mb-3">
+                    <label for="contrasenya" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="contrasenya" name="contrasenya" required>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" value="true" id="crearGrupo" name="crearGrupo" onclick="toggleNombreGrupo(this)">
+                    <label class="form-check-label" for="crearGrupo">
+                        Quiero crear un nuevo grupo (tendré rol de LÍDER)
+                    </label>
+                </div>
+
+                <div class="mb-3" id="campoNombreGrupo" style="display: none;">
+                    <label for="nombreGrupo" class="form-label">Nombre del Nuevo Grupo</label>
+                    <input type="text" class="form-control" id="nombreGrupo" name="nombreGrupo">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Registrarse</button>
+                <a th:href="@{/login}" class="btn btn-link float-end">¿Ya tienes cuenta? Inicia sesión</a>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleNombreGrupo(checkbox) {
+            var campo = document.getElementById('campoNombreGrupo');
+            var input = document.getElementById('nombreGrupo');
+            if (checkbox.checked) {
+                campo.style.display = 'block';
+                input.required = true;
+            } else {
+                campo.style.display = 'none';
+                input.required = false;
+            }
+        }
+    </script>
+
+</th:block>
+</html>

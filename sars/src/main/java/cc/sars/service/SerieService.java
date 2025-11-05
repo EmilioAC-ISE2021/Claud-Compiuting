@@ -5,6 +5,7 @@ import cc.sars.model.EstadosTareas;
 import cc.sars.model.Grupo;
 import cc.sars.model.Serie;
 import cc.sars.model.Tarea;
+import cc.sars.model.User; // Importar User
 import cc.sars.repository.CapituloRepository;
 import cc.sars.repository.GrupoRepository;
 import cc.sars.repository.SerieRepository;
@@ -108,6 +109,7 @@ public class SerieService {
 
         Tarea nuevaTarea = new Tarea(nombreTarea);
 
+        // --- CORRECCIÓN ---
         // Llamada al método 'anyadirTarea' de la entidad Capitulo
         capitulo.anyadirTarea(nuevaTarea);
 
@@ -115,9 +117,11 @@ public class SerieService {
     }
 
     /**
-     * Actualiza el estado de una tarea específica dentro de un capítulo.
+     * Actualiza el estado de una tarea.
+     * Gestiona la asignación (al usuario actual) y el bloqueo de la tarea.
      */
-    public Capitulo updateTareaEstado(String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado) {
+    public Capitulo updateTareaEstado(String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado, User usuarioActual) {
+        
         Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
                 .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
 
@@ -125,6 +129,25 @@ public class SerieService {
                 .filter(tarea -> tarea.getNombre().equals(nombreTarea))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No se encontró la tarea: " + nombreTarea));
+
+        String usuarioAsignado = tareaAActualizar.getUsuarioAsignado();
+        String nombreUsuarioActual = usuarioActual.getUsername();
+
+        // LÓGICA DE BLOQUEO: Si la tarea ya está asignada a OTRA persona
+        if (!usuarioAsignado.equals("NADIE") && !usuarioAsignado.equals(nombreUsuarioActual)) {
+            throw new RuntimeException("La tarea '" + nombreTarea + "' ya está asignada a " + usuarioAsignado + ".");
+        }
+
+        // LÓGICA DE ASIGNACIÓN/LIBERACIÓN:
+        
+        // 1. Si el nuevo estado es "Asignado", se auto-asigna al usuario actual.
+        if (nuevoEstado == EstadosTareas.Asignado) {
+            tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual);
+        } 
+        // 2. Si el nuevo estado es "NoAsignado", se libera (solo el dueño puede hacerlo).
+        else if (nuevoEstado == EstadosTareas.NoAsignado) {
+            tareaAActualizar.setUsuarioAsignado("NADIE");
+        }
 
         tareaAActualizar.setEstadoTarea(nuevoEstado);
         return capituloRepository.save(capitulo);
@@ -136,21 +159,5 @@ public class SerieService {
     @Transactional(readOnly = true)
     public List<EstadosTareas> getTodosLosEstados() {
         return Arrays.asList(EstadosTareas.values());
-    }
-    
-    /**
-     * Actualiza el usuario asignado de una tarea específica dentro de un capítulo.
-     */
-    public Capitulo updateTareaUsuario(String nombreCapitulo, String nombreTarea, String nuevoUsuario) {
-        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
-                .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
-
-        Tarea tareaAActualizar = capitulo.getTareas().stream()
-                .filter(tarea -> tarea.getNombre().equals(nombreTarea))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No se encontró la tarea: " + nombreTarea));
-
-        tareaAActualizar.setUsuarioAsignado(nuevoUsuario);
-        return capituloRepository.save(capitulo);
     }
 }

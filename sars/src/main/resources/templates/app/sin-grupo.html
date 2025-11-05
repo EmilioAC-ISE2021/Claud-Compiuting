@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(content=~{::content}, titulo='Pendiente de Asignación')}">
+
+<th:block th:fragment="content">
+    
+    <div class="container text-center mt-5">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="alert alert-warning p-5">
+                    <h2 class="alert-heading">¡Bienvenido!</h2>
+                    <p class="lead">
+                        Tu cuenta ha sido creada, pero aún no estás asignado a ningún grupo.
+                    </p>
+                    <hr>
+                    <p class="mb-0">
+                        Por favor, contacta a un **LÍDER** de grupo para que te añada.
+                    </p>
+                </div>
+                </div>
+        </div>
+    </div>
+
+</th:block>
+</html>
