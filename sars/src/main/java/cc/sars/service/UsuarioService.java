@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -70,5 +71,13 @@ public class UsuarioService {
     @Transactional(readOnly = true)
     public List<User> getTodosLosUsuarios() {
         return userRepository.findAll();
+    }
+
+    /**
+     * Busca un usuario por su nombre de usuario.
+     */
+    @Transactional(readOnly = true)
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 }

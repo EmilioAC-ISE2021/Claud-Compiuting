@@ -11,12 +11,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
 public class GrupoController {
+
+    private static final Logger logger = LoggerFactory.getLogger(GrupoController.class);
 
     private final GrupoService grupoService;
     private final UsuarioService usuarioService;
@@ -32,9 +36,12 @@ public class GrupoController {
     @GetMapping("/grupo/gestionar")
     public String getGestionPage(@AuthenticationPrincipal User user, Model model) {
 
+        // Recargar el usuario para asegurar que sus grupos estén actualizados
+        User currentUser = usuarioService.findByUsername(user.getUsername())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+
         // 1. Encontrar el grupo del LIDER
-        Grupo miGrupo = user.getGrupos().stream().findFirst()
-                .orElseThrow(() -> new RuntimeException("Líder sin grupo."));
+        Grupo miGrupo = grupoService.getGrupoPorNombre(currentUser.getGrupos().stream().findFirst().orElseThrow(() -> new RuntimeException("Líder sin grupo.")).getNombre());
 
         // 2. Obtener los usuarios que YA están en el grupo
         Set<User> usuariosEnGrupo = miGrupo.getUsuarios();
@@ -71,6 +78,7 @@ public class GrupoController {
         try {
             grupoService.agregarUsuarioAGrupo(nombreUsuarioAAgregar, nombreGrupo);
         } catch (Exception e) {
+            logger.error("Error al agregar usuario al grupo: {}", e.getMessage(), e);
             // Manejar error (ej: usuario no existe)
             // Por ahora, solo redirigimos.
         }

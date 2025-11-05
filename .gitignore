@@ -1,1 +1,10 @@
 sars/target/
+sars/.cache/
+sars/.config/
+sars/.local/
+sars/.m2/
+sars/.npm/
+sars/.gemini/
+sars/.bashrc
+sars/.inputrc
+sars/.Xauthority

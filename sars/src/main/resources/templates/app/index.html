@@ -18,20 +18,22 @@
 
     <hr>
 
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <h4 class="mb-3">Crear Nueva Serie</h4>
-            <form th:action="@{/crear-serie}" method="post" class="card p-3">
-                <div class="mb-3">
-                    <label for="nombre" class="form-label">Nombre de la Serie</label>
-                    <input type="text" class="form-control" id="nombre" name="nombre" required>
-                </div>
-                <div class="mb-3">
-                    <label for="descripcion" class="form-label">Descripción</label>
-                    <input type="text" class="form-control" id="descripcion" name="descripcion">
-                </div>
-                <button type="submit" class="btn btn-primary">Crear Serie</button>
-            </form>
+    <div sec:authorize="hasRole('ROLE_LIDER')">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <h4 class="mb-3">Crear Nueva Serie</h4>
+                <form th:action="@{/serie/crear}" method="post" class="card p-3">
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre de la Serie</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <input type="text" class="form-control" id="descripcion" name="descripcion">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Crear Serie</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -49,20 +51,12 @@
                 <thead>
                     <tr>
                         <th>Nombre de la Serie</th>
-                        <th>Descripción</th>
-                        <th>Capítulos</th>
-                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr th:each="serie : ${series}">
-                        <td th:text="${serie.nombre}">Nombre de Serie</td>
-                        <td th:text="${serie.descripcion}">Descripción...</td>
-                        <td th:text="${#lists.size(serie.capitulos)}">3</td>
                         <td>
-                            <a th:href="@{/serie/{nombre}(nombre=${serie.nombre})}" class="btn btn-sm btn-info">
-                                Administrar
-                            </a>
+                            <a th:href="@{/serie/{nombreSerie}(nombreSerie=${serie.nombre})}" th:text="${serie.nombre}">Nombre de Serie</a>
                         </td>
                     </tr>
                 </tbody>

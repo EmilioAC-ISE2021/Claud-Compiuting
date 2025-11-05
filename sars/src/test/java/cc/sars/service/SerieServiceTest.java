@@ -175,7 +175,7 @@ public class SerieServiceTest {
             serieService.updateTareaEstado("MiCap", "Tarea 1", EstadosTareas.Completado, usuarioSimulado);
         })
         .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("ya está asignada a OtroUsuario");
+        .hasMessage("No puedes cambiar el estado de una tarea asignada a OtroUsuario.");
 
         // Verificamos que NUNCA se guardó
         verify(capituloRepository, never()).save(capituloReal);

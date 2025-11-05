@@ -92,6 +92,10 @@ public class SerieService {
 
         Capitulo nuevoCapitulo = new Capitulo(nombreCapitulo);
         
+        // Añadir la tarea 'CC' por defecto
+        Tarea tareaCC = new Tarea("CC");
+        nuevoCapitulo.anyadirTarea(tareaCC);
+        
         // Llamada al método 'addCapitulo' de la entidad Serie
         serie.addCapitulo(nuevoCapitulo);
 
@@ -120,39 +124,67 @@ public class SerieService {
      * Actualiza el estado de una tarea.
      * Gestiona la asignación (al usuario actual) y el bloqueo de la tarea.
      */
-    public Capitulo updateTareaEstado(String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado, User usuarioActual) {
-        
-        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
-                .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
-
-        Tarea tareaAActualizar = capitulo.getTareas().stream()
-                .filter(tarea -> tarea.getNombre().equals(nombreTarea))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No se encontró la tarea: " + nombreTarea));
-
-        String usuarioAsignado = tareaAActualizar.getUsuarioAsignado();
-        String nombreUsuarioActual = usuarioActual.getUsername();
-
-        // LÓGICA DE BLOQUEO: Si la tarea ya está asignada a OTRA persona
-        if (!usuarioAsignado.equals("NADIE") && !usuarioAsignado.equals(nombreUsuarioActual)) {
-            throw new RuntimeException("La tarea '" + nombreTarea + "' ya está asignada a " + usuarioAsignado + ".");
+        public Capitulo updateTareaEstado(String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado, User usuarioActual) {
+    
+            Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+                    .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
+    
+            Tarea tareaAActualizar = capitulo.getTareas().stream()
+                    .filter(tarea -> tarea.getNombre().equals(nombreTarea))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("No se encontró la tarea: " + nombreTarea));
+    
+            String usuarioAsignado = tareaAActualizar.getUsuarioAsignado();
+            String nombreUsuarioActual = usuarioActual.getUsername();
+            EstadosTareas estadoActual = tareaAActualizar.getEstadoTarea(); // Get current state
+    
+            // Lógica para LÍDER: Puede cambiar el estado como quiera
+            if (usuarioActual.getRole() == cc.sars.model.Role.ROLE_LIDER) {
+                if (nuevoEstado == EstadosTareas.Asignado) {
+                    tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual);
+                } else if (nuevoEstado == EstadosTareas.NoAsignado || nuevoEstado == EstadosTareas.Repetir) {
+                    tareaAActualizar.setUsuarioAsignado("NADIE");
+                }
+            }
+            // Lógica para USUARIO: Restricciones
+            else {
+                // Condición principal: Solo puede cambiar si la tarea está asignada a NADIE o a sí mismo
+                if (!usuarioAsignado.equals("NADIE") && !usuarioAsignado.equals(nombreUsuarioActual)) {
+                    throw new RuntimeException("No puedes cambiar el estado de una tarea asignada a " + usuarioAsignado + ".");
+                }
+    
+                // Transiciones permitidas para usuarios
+                if (estadoActual == EstadosTareas.NoAsignado || estadoActual == EstadosTareas.Repetir) {
+                    if (nuevoEstado == EstadosTareas.Asignado) {
+                        tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual); // Se auto-asigna
+                    } else if (nuevoEstado == EstadosTareas.Completado) { // Allow direct completion of unassigned/repeated tasks
+                        tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual); // Assign to current user
+                    }
+                    else {
+                        throw new RuntimeException("Solo puedes asignarte esta tarea.");
+                    }
+                } else if (estadoActual == EstadosTareas.Asignado) {
+                    if (nuevoEstado == EstadosTareas.Completado) {
+                        // El usuario asignado sigue siendo el mismo al completar
+                    } else if (nuevoEstado == EstadosTareas.NoAsignado) { // Permitir desasignar
+                        tareaAActualizar.setUsuarioAsignado("NADIE"); // Se libera al desasignar
+                    } else {
+                        throw new RuntimeException("Solo puedes marcar como completada o desasignar esta tarea.");
+                    }
+                } else if (estadoActual == EstadosTareas.Completado) {
+                    if (nuevoEstado == EstadosTareas.Repetir) {
+                        tareaAActualizar.setUsuarioAsignado("NADIE"); // Se libera al repetir
+                    } else {
+                        throw new RuntimeException("Solo puedes marcar como repetir esta tarea.");
+                    }
+                } else {
+                    throw new RuntimeException("Transición de estado no permitida para usuarios.");
+                }
+            }
+    
+            tareaAActualizar.setEstadoTarea(nuevoEstado);
+            return capituloRepository.save(capitulo);
         }
-
-        // LÓGICA DE ASIGNACIÓN/LIBERACIÓN:
-        
-        // 1. Si el nuevo estado es "Asignado", se auto-asigna al usuario actual.
-        if (nuevoEstado == EstadosTareas.Asignado) {
-            tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual);
-        } 
-        // 2. Si el nuevo estado es "NoAsignado", se libera (solo el dueño puede hacerlo).
-        else if (nuevoEstado == EstadosTareas.NoAsignado) {
-            tareaAActualizar.setUsuarioAsignado("NADIE");
-        }
-
-        tareaAActualizar.setEstadoTarea(nuevoEstado);
-        return capituloRepository.save(capitulo);
-    }
-
     /**
      * Devuelve todos los valores posibles del Enum EstadosTareas.
      */
