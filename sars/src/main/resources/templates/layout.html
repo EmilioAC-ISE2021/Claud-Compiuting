@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(content, titulo)">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,33 +11,7 @@
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand" th:href="@{/}">S.A.R.S.</a>
-            
-            <div class="collapse navbar-collapse" id="navbarSuportedContent">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    
-                    <li class="nav-item" sec:authorize="!isAuthenticated()">
-                        <a class="nav-link" th:href="@{/login}">Login</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="!isAuthenticated()">
-                        <a class="nav-link" th:href="@{/register}">Registrarse</a>
-                    </li>
-
-                    <li class="nav-item" sec:authorize="isAuthenticated()">
-                        <span class="navbar-text me-3">
-                            Usuario: <strong sec:authentication="name"></strong>
-                        </span>
-                    </li>
-                    <li class="nav-item" sec:authorize="isAuthenticated()">
-                        <form th:action="@{/logout}" method="post" class="d-inline">
-                            <button type:="submit" class="btn btn-dark">Cerrar Sesión</button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+        </nav>
 
     <div class="container">
         <div th:replace="${content}">

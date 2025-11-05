@@ -1,6 +1,6 @@
 package cc.sars.config;
 
-import cc.sars.service.JpaUserDetailsService; // Importamos nuestro servicio
+import cc.sars.service.JpaUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,17 +13,12 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Inyectamos nuestro servicio de detalles de usuario
     private final JpaUserDetailsService jpaUserDetailsService;
 
     public SecurityConfig(JpaUserDetailsService jpaUserDetailsService) {
         this.jpaUserDetailsService = jpaUserDetailsService;
     }
 
-    /**
-     * Define el bean para hashear contraseñas.
-     * Usamos BCrypt, el estándar recomendado.
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -32,35 +27,32 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Define qué servicio de usuarios usar
             .userDetailsService(jpaUserDetailsService)
             
-            // 2. Define las reglas de autorización (permisos)
+            // --- ¡CORRECCIÓN AQUÍ! ---
+            // El orden de las reglas de autorización importa.
             .authorizeHttpRequests(auth -> auth
-                // Rutas públicas (login, registro, CSS)
-                .requestMatchers("/login", "/register", "/css/**", "/js/**").permitAll()
                 
-                // Rutas solo para LIDER (gestión de usuarios)
+                // 1. PRIMERO: Definimos las rutas públicas que CUALQUIERA puede ver.
+                .requestMatchers("/login", "/register", "/css/**", "/js/**", "/error").permitAll()
+                
+                // 2. LUEGO: Definimos las reglas específicas por ROL.
                 .requestMatchers("/grupo/gestionar/**").hasRole("LIDER") 
-                
-                // Rutas solo para ADMIN (futuro)
                 .requestMatchers("/admin/**").hasRole("ADMIN") 
                 
-                // Todas las demás rutas (index, serie, etc.) requieren estar logueado
+                // 3. FINALMENTE: Decimos que CUALQUIER OTRA RUTA requiere autenticación.
                 .anyRequest().authenticated()
             )
             
-            // 3. Define la página de login
             .formLogin(form -> form
-                .loginPage("/login") // Le dice a Spring "mi página de login está en /login"
-                .loginProcessingUrl("/login") // La URL a la que el formulario debe enviar (POST)
+                .loginPage("/login") 
+                .loginProcessingUrl("/login") 
                 .defaultSuccessUrl("/", true) // A dónde ir después de un login exitoso
-                .permitAll() // Permite a todos ver la página de login
+                .permitAll() // (Esto es redundante si ya está en permitAll() arriba, pero no hace daño)
             )
             
-            // 4. Define el logout
             .logout(logout -> logout
-                .logoutSuccessUrl("/login?logout") // A dónde ir después de cerrar sesión
+                .logoutSuccessUrl("/login?logout")
                 .permitAll()
             );
 

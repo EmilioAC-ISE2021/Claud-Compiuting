@@ -9,7 +9,7 @@
             Grupo: <span class="fw-bold" th:text="${grupo.nombre}">Nombre del Grupo</span>
         </h2>
         
-        <a th:if="${usuario.rol.name() == 'ROLE_LIDER'}" 
+        <a th:if="${usuario.role.name() == 'ROLE_LIDER'}" 
            th:href="@{/grupo/gestionar}" 
            class="btn btn-outline-secondary">
             Gestionar Usuarios del Grupo

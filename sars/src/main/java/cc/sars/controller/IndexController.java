@@ -33,7 +33,7 @@ public class IndexController {
 
         // Caso 1: Es un USER y no tiene NINGÚN grupo.
         if (user.getRole() == Role.ROLE_USER && gruposDelUsuario.isEmpty()) {
-            return "sin-grupo"; // Devuelve la plantilla sin-grupo.html
+            return "app/sin-grupo"; // Devuelve la plantilla sin-grupo.html
         }
 
         // Caso 2: Es LIDER o es USER y ya está en (al menos) un grupo.
@@ -48,6 +48,6 @@ public class IndexController {
         model.addAttribute("grupo", miGrupo);
         model.addAttribute("series", seriesDelGrupo);
 
-        return "index"; // Devuelve la plantilla index.html (la de "gestionar series")
+        return "app/index"; // Devuelve la plantilla app/index.html (la de "gestionar series")
     }
 }

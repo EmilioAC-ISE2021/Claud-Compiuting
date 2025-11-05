@@ -52,7 +52,7 @@ public class GrupoController {
         model.addAttribute("usuariosEnGrupo", usuariosEnGrupo);
         model.addAttribute("usuariosDisponibles", usuariosDisponibles);
 
-        return "gestionar-grupo"; // Devuelve gestionar-grupo.html
+        return "app/gestionar-grupo"; // Devuelve gestionar-grupo.html
     }
 
     /**
