@@ -1,8 +1,6 @@
 | Nº H.U.       | Descripción                                                         |
 | --------------- | ----------------------------------------------------------------------- |
 |U1| Como usuario, quiero poder registrarme|
-|U1.1| «, quiero poder añadirme como usuario|
-|A1.2| «, quiero poder añadirme a un grupo|
 |U2| Como usuario, quiero poder crear un nuevo grupo|
 |U3| Como usuario, quiero poder gestionar mi trabajo en un capítulo|
 |U3.1| «, quiero poder asignarme una tarea|
