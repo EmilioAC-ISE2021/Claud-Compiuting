@@ -10,6 +10,13 @@
         Gestionar Grupo: <span class="fw-bold" th:text="${grupo.nombre}">Nombre del Grupo</span>
     </h2>
 
+    <div th:if="${success_message}" class="alert alert-success" role="alert">
+        [[${success_message}]]
+    </div>
+    <div th:if="${error_message}" class="alert alert-danger" role="alert">
+        [[${error_message}]]
+    </div>
+
     <div class="row">
         <div class="col-md-5">
             <h4>Añadir Usuario al Grupo</h4>
@@ -35,10 +42,19 @@
             <ul class="list-group">
                 <li th:each="usuario : ${usuariosEnGrupo}" class="list-group-item d-flex justify-content-between align-items-center">
                     <span th:text="${usuario.username}">username.miembro</span>
-                    <span classs="badge bg-secondary rounded-pill" 
-                          th:text="${usuario.role.name() == 'ROLE_LIDER' ? 'Líder' : 'Usuario'}">
-                        Rol
-                    </span>
+                    
+                    <form th:action="@{/grupo/gestionar/cambiar-rol}" method="post" class="d-inline-flex align-items-center">
+                        <input type="hidden" name="username" th:value="${usuario.username}">
+                        <select name="newRole" class="form-select form-select-sm me-2" onchange="this.form.submit()">
+                            <option th:each="role : ${rolesDisponibles}"
+                                    th:value="${role}"
+                                    th:text="${role.name() == 'ROLE_LIDER' ? 'Líder' : (role.name() == 'ROLE_USER' ? 'Usuario' : 'UsuarioCC')}"
+                                    th:selected="${role == usuario.role}">
+                                Rol
+                            </option>
+                        </select>
+                        <noscript><button type="submit" class="btn btn-sm btn-primary">Cambiar Rol</button></noscript>
+                    </form>
                 </li>
             </ul>
         </div>

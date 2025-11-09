@@ -35,7 +35,6 @@ public class SerieController {
             serieService.createSerie(nombre, descripcion, nombreGrupo);
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            // TODO: Enviar este error a la vista con RedirectAttributes
         }
         return "redirect:/";
     }
@@ -57,7 +56,6 @@ public class SerieController {
             serieService.addCapituloToSerie(nombreSerie, nombreCapitulo);
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            // TODO: Enviar este error a la vista con RedirectAttributes
         }
         return "redirect:/serie/" + nombreSerie;
     }
@@ -92,7 +90,6 @@ public class SerieController {
             serieService.updateTareaEstado(nombreCapitulo, nombreTarea, estado, usuarioActual);
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            // TODO: Enviar este error a la vista con RedirectAttributes
         }
         return "redirect:/serie/" + nombreSerie;
     }

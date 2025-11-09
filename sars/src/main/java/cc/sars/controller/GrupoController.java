@@ -1,6 +1,7 @@
 package cc.sars.controller;
 
 import cc.sars.model.Grupo;
+import cc.sars.model.Role; // Importar Role
 import cc.sars.model.User;
 import cc.sars.service.GrupoService;
 import cc.sars.service.UsuarioService;
@@ -10,12 +11,14 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes; // Importar RedirectAttributes
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Arrays; // Importar Arrays
 
 @Controller
 public class GrupoController {
@@ -58,6 +61,7 @@ public class GrupoController {
         model.addAttribute("grupo", miGrupo);
         model.addAttribute("usuariosEnGrupo", usuariosEnGrupo);
         model.addAttribute("usuariosDisponibles", usuariosDisponibles);
+        model.addAttribute("rolesDisponibles", Arrays.asList(Role.ROLE_LIDER, Role.ROLE_USER, Role.ROLE_QC)); // Pasar los roles disponibles
 
         return "app/gestionar-grupo"; // Devuelve gestionar-grupo.html
     }
@@ -83,6 +87,29 @@ public class GrupoController {
             // Por ahora, solo redirigimos.
         }
 
+        return "redirect:/grupo/gestionar";
+    }
+
+    /**
+     * Procesa el cambio de rol de un usuario en el grupo.
+     */
+    @PostMapping("/grupo/gestionar/cambiar-rol")
+    public String cambiarRolUsuario(
+            @AuthenticationPrincipal User user,
+            @RequestParam("username") String usernameToChange,
+            @RequestParam("newRole") Role newRole,
+            RedirectAttributes redirectAttributes) {
+
+        // Obtener el nombre del grupo del LIDER que hace la petición
+        String nombreGrupo = user.getGrupos().stream().findFirst()
+                .orElseThrow(() -> new RuntimeException("Líder sin grupo.")).getNombre();
+
+        try {
+            usuarioService.changeUserRole(usernameToChange, newRole, nombreGrupo);
+            redirectAttributes.addFlashAttribute("success_message", "Rol de usuario actualizado correctamente.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error_message", e.getMessage());
+        }
         return "redirect:/grupo/gestionar";
     }
 }

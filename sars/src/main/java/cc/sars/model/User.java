@@ -44,6 +44,10 @@ public class User implements UserDetails {
     public Role getRole() {
         return role;
     }
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
     public Set<Grupo> getGrupos() {
         return grupos;
     }

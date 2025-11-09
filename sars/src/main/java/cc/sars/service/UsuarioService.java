@@ -80,4 +80,35 @@ public class UsuarioService {
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
+
+    /**
+     * Cambia el rol de un usuario dentro de un grupo, con validación.
+     * Asegura que siempre haya al menos un LIDER en el grupo.
+     */
+    public void changeUserRole(String username, Role newRole, String groupName) {
+        User userToModify = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + username));
+
+        Grupo group = grupoRepository.findByNombre(groupName)
+                .orElseThrow(() -> new RuntimeException("Grupo no encontrado: " + groupName));
+
+        // Validar que el usuario pertenece al grupo
+        if (!userToModify.getGrupos().contains(group)) {
+            throw new RuntimeException("El usuario " + username + " no pertenece al grupo " + groupName);
+        }
+
+        // Si el rol actual es LIDER y el nuevo rol no es LIDER,
+        // debemos asegurarnos de que haya al menos otro LIDER en el grupo.
+        if (userToModify.getRole() == Role.ROLE_LIDER && newRole != Role.ROLE_LIDER) {
+            long leaderCount = group.getUsuarios().stream()
+                    .filter(u -> u.getRole() == Role.ROLE_LIDER && !u.getUsername().equals(username))
+                    .count();
+            if (leaderCount == 0) {
+                throw new RuntimeException("No se puede cambiar el rol. Debe haber al menos un LIDER en el grupo.");
+            }
+        }
+
+        userToModify.setRole(newRole);
+        userRepository.save(userToModify);
+    }
 }

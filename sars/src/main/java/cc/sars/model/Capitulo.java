@@ -54,17 +54,6 @@ public class Capitulo {
     }
     
     public List<Tarea> getTareas() {
-        // Ensure "CC" task is always last for display purposes
-        Tarea ccTask = null;
-        for (int i = 0; i < tareas.size(); i++) {
-            if (tareas.get(i).getNombre().equals("CC")) {
-                ccTask = tareas.remove(i);
-                break;
-            }
-        }
-        if (ccTask != null) {
-            tareas.add(ccTask);
-        }
         return tareas;
     }
     

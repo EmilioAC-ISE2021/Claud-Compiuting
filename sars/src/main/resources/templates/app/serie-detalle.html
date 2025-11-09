@@ -22,8 +22,19 @@
     </div>
 
     <h4 class="mb-3">Capítulos</h4>
-    <div class="capitulo card mb-3" th:each="capitulo : ${serie.capitulos}">
-        
+    
+    <div th:if="${serie.capitulos.isEmpty()}" class="alert alert-info">
+        Esta serie aún no tiene capítulos. ¡Añade uno!
+    </div>
+
+    <div th:unless="${serie.capitulos.isEmpty()}">
+            <div class="capitulo card mb-3" th:each="capitulo : ${serie.capitulos}" th:if="${capitulo != null}"
+                 th:with="ccTask=${capitulo.tareas.?[nombre == 'CC'][0]}, 
+                          ccCompleted=${ccTask != null and ccTask.estadoTarea == T(cc.sars.model.EstadosTareas).Completado},
+                          isLeader=${usuarioActual.role.name() == 'ROLE_LIDER'},
+                          isUser=${usuarioActual.role.name() == 'ROLE_USER'},
+                          isQC=${usuarioActual.role.name() == 'ROLE_QC'}"
+                 th:classappend="${ccCompleted ? 'border-success border-5' : ''}">        
         <div class="card-header">
             <h5 class="mb-0" th:text="${capitulo.nombre}">Nombre del Capítulo</h5>
         </div>
@@ -31,90 +42,127 @@
         <div class="card-body">
             <div class="tareas-container d-flex flex-wrap align-items-start">
                 
-                                                <div class="tarea-card card p-3 me-2 mb-2 border-5"
+            <div class="tareas-container d-flex flex-wrap align-items-start">
                 
-                                                     th:each="tarea : ${capitulo.tareas}" th:if="${tarea != null and (tarea.nombre != 'CC' or usuarioActual.role.name() == 'ROLE_LIDER')}"
-                
-                                                                          th:classappend="${tarea.nombre == 'CC' and tarea.estadoTarea.name() == 'NoAsignado' ? 'border-warning-subtle' : 
-                
-                                                                                          (tarea.estadoTarea.name() == 'Completado' ? 'border-success-subtle' : 
-                
-                                                                                          (tarea.estadoTarea.name() == 'Repetir' ? 'border-danger-subtle' : 
-                
-                                                                                          (tarea.estadoTarea.name() == 'Asignado' ? 'border-primary-subtle' : '')))}">
-                
-                                                                         <strong th:text="${tarea.nombre}">Nombre de Tarea</strong>
+                <!-- Renderizar tareas que NO son 'CC' primero -->
+                <div class="tarea-card card p-3 me-2 mb-2 border-5"
+                     th:each="tarea : ${capitulo.tareas.?[nombre != 'CC']}"
+                     th:classappend="${tarea.nombre == 'CC' and tarea.estadoTarea.name() == 'NoAsignado' ? 'border-warning-subtle' : 
+                                     (tarea.estadoTarea.name() == 'Completado' ? 'border-success-subtle' : 
+                                     (tarea.estadoTarea.name() == 'Repetir' ? 'border-danger-subtle' : 
+                                     (tarea.estadoTarea.name() == 'Asignado' ? 'border-primary-subtle' : '')))}"
+                     th:with="canModifyTaskStatus=${isLeader or (not ccCompleted and ((isUser) or (isQC and (tarea.estadoTarea.name() == 'Completado' or tarea.usuarioAsignado == 'NADIE' or tarea.usuarioAsignado == usuarioActual.username))))}">
+                    
+                    <strong th:text="${tarea.nombre}">Nombre de Tarea</strong>
                     <p class="mb-1" th:text="'Usuario: ' + ${tarea.usuarioAsignado}">Usuario: Nadie</p>
 
                     <!-- Lógica para mostrar el desplegable o solo el texto del estado -->
-                    <div th:if="${usuarioActual.role.name() == 'ROLE_LIDER' or (usuarioActual.role.name() == 'ROLE_USER' and (tarea.usuarioAsignado == 'NADIE' or tarea.usuarioAsignado == usuarioActual.username))}">
+                    <div th:if="${canModifyTaskStatus}">
                         <form method="post" th:action="@{/serie/{ns}/capitulo/{nc}/tarea/{nt}/estado(ns=${serie.nombre}, nc=${capitulo.nombre}, nt=${tarea.nombre})}">
                             <select name="estado" onchange="this.form.submit()" class="form-select form-select-sm">
-                                <!-- Opciones para LÍDER -->
-                                <th:block th:if="${usuarioActual.role.name() == 'ROLE_LIDER'}">
-                                    <option th:each="e : ${todosLosEstados}"
-                                            th:value="${e}"
-                                            th:text="${e}"
-                                            th:selected="${e == tarea.estadoTarea}">
-                                        Estado
-                                    </option>
-                                </th:block>
+                                <!-- LÓGICA DE TAREAS REGULARES -->
+                                <th:block th:if="${tarea.nombre != 'CC'}">
+                                    <!-- Opciones para LÍDER -->
+                                    <th:block th:if="${usuarioActual.role.name() == 'ROLE_LIDER'}">
+                                        <option th:each="e : ${todosLosEstados}"
+                                                th:value="${e}"
+                                                th:text="${e}"
+                                                th:selected="${e == tarea.estadoTarea}">
+                                            Estado
+                                        </option>
+                                    </th:block>
 
-                                <!-- Opciones para USUARIO -->
-                                <th:block th:if="${usuarioActual.role.name() == 'ROLE_USER'}">
-                                    <!-- Si la tarea está NoAsignado o Repetir, solo puede asignarse -->
-                                    <option th:if="${(tarea.estadoTarea.name() == 'NoAsignado' or tarea.estadoTarea.name() == 'Repetir') and e.name() == 'Asignado'}"
-                                            th:each="e : ${todosLosEstados}"
-                                            th:value="${e}"
-                                            th:text="${e}"
-                                            th:selected="${e == tarea.estadoTarea}">
-                                        Estado
-                                    </option>
-                                    <!-- Si la tarea está Asignado, solo puede completarla o desasignarla -->
-                                    <option th:if="${tarea.estadoTarea.name() == 'Asignado' and (e.name() == 'Completado' or e.name() == 'NoAsignado')}"
-                                            th:each="e : ${todosLosEstados}"
-                                            th:value="${e}"
-                                            th:text="${e}"
-                                            th:selected="${e == tarea.estadoTarea}">
-                                        Estado
-                                    </option>
-                                    <!-- Si la tarea está Completado, solo puede marcarla como Repetir -->
-                                    <option th:if="${tarea.estadoTarea.name() == 'Completado' and e.name() == 'Repetir'}"
-                                            th:each="e : ${todosLosEstados}"
-                                            th:value="${e}"
-                                            th:text="${e}"
-                                            th:selected="${e == tarea.estadoTarea}">
-                                        Estado
-                                    </option>
-                                    <!-- Mostrar el estado actual si no hay transiciones permitidas o es el estado inicial -->
-                                    <option th:if="${(tarea.estadoTarea.name() == 'NoAsignado' or tarea.estadoTarea.name() == 'Repetir') and tarea.estadoTarea.name() == e.name()}"
-                                            th:each="e : ${todosLosEstados}"
-                                            th:value="${e}"
-                                            th:text="${e}"
-                                            th:selected="${e == tarea.estadoTarea}">
-                                        Estado
-                                    </option>
-                                    <option th:if="${tarea.estadoTarea.name() == 'Asignado' and tarea.estadoTarea.name() == e.name()}"
-                                            th:each="e : ${todosLosEstados}"
-                                            th:value="${e}"
-                                            th:text="${e}"
-                                            th:selected="${e == tarea.estadoTarea}">
-                                        Estado
-                                    </option>
-                                    <option th:if="${tarea.estadoTarea.name() == 'Completado' and tarea.estadoTarea.name() == e.name()}"
-                                            th:each="e : ${todosLosEstados}"
-                                            th:value="${e}"
-                                            th:text="${e}"
-                                            th:selected="${e == tarea.estadoTarea}">
-                                        Estado
-                                    </option>
+                                    <!-- Opciones para USUARIO -->
+                                    <th:block th:if="${usuarioActual.role.name() == 'ROLE_USER' and (capitulo.tareas.?[nombre == 'CC'].empty or capitulo.tareas.?[nombre == 'CC'].![estadoTarea].get(0) != T(cc.sars.model.EstadosTareas).Completado)}">
+                                        <option th:each="e : ${todosLosEstados}"
+                                                th:value="${e}"
+                                                th:text="${e}"
+                                                th:selected="${e == tarea.estadoTarea}"
+                                                th:if="${
+                                                    e == tarea.estadoTarea or
+                                                    ((tarea.estadoTarea.name() == 'NoAsignado' or tarea.estadoTarea.name() == 'Repetir') and e.name() == 'Asignado') or
+                                                    (tarea.estadoTarea.name() == 'Asignado' and (e.name() == 'Completado' or e.name() == 'NoAsignado')) or
+                                                    (tarea.estadoTarea.name() == 'Completado' and e.name() == 'Repetir')
+                                                }">
+                                            Estado
+                                        </option>
+                                    </th:block>
+
+                                    <!-- Opciones para USUARIO_CC -->
+                                    <th:block th:if="${usuarioActual.role.name() == 'ROLE_QC'}">
+                                        <option th:each="e : ${todosLosEstados}"
+                                                th:value="${e}"
+                                                th:text="${e}"
+                                                th:selected="${e == tarea.estadoTarea}"
+                                                th:if="${
+                                                    e == tarea.estadoTarea or
+                                                    ((tarea.estadoTarea.name() == 'NoAsignado' or tarea.estadoTarea.name() == 'Repetir') and e.name() == 'Asignado') or
+                                                    (tarea.estadoTarea.name() == 'Asignado' and (e.name() == 'Completado' or e.name() == 'NoAsignado')) or
+                                                    (tarea.estadoTarea.name() == 'Completado' and e.name() == 'Repetir')
+                                                }">
+                                            Estado
+                                        </option>
+                                    </th:block>
                                 </th:block>
                             </select>
                             <noscript><button type="submit" class="btn btn-sm btn-primary mt-2">Actualizar</button></noscript>
                         </form>
                     </div>
-                    <div th:unless="${usuarioActual.role.name() == 'ROLE_LIDER' or (usuarioActual.role.name() == 'ROLE_USER' and (tarea.usuarioAsignado == 'NADIE' or tarea.usuarioAsignado == usuarioActual.username))}">
+                    <div th:unless="${canModifyTaskStatus}">
                         <p class="mb-0" th:text="${tarea.estadoTarea}">Estado de Tarea</p>
+                    </div>
+                </div>
+
+                <!-- Renderizar la tarea 'CC' al final, si existe -->
+                                    <div th:with="ccTask=${capitulo.tareas.?[nombre == 'CC'][0]}" sec:authorize="hasAnyRole('ROLE_LIDER', 'ROLE_QC')">                    <div th:if="${ccTask != null}"
+                         class="tarea-card card p-3 me-2 mb-2 border-5"
+                         th:classappend="${ccTask.nombre == 'CC' and ccTask.estadoTarea.name() == 'NoAsignado' ? 'border-warning-subtle' : 
+                                         (ccTask.estadoTarea.name() == 'Completado' ? 'border-success-subtle' : 
+                                         (ccTask.estadoTarea.name() == 'Repetir' ? 'border-danger-subtle' : 
+                                         (ccTask.estadoTarea.name() == 'Asignado' ? 'border-primary-subtle' : '')))}"
+                         th:with="canModifyCCTaskStatus=${isLeader or (not ccCompleted and isQC and (ccTask.estadoTarea.name() == 'Completado' or ccTask.usuarioAsignado == 'NADIE' or ccTask.usuarioAsignado == usuarioActual.username))}">
+                        
+                        <strong th:text="${ccTask.nombre}">Nombre de Tarea</strong>
+                        <p class="mb-1" th:text="'Usuario: ' + ${ccTask.usuarioAsignado}">Usuario: Nadie</p>
+
+                        <!-- Lógica para mostrar el desplegable o solo el texto del estado para CC Task -->
+                        <div th:if="${canModifyCCTaskStatus}">
+                            <form method="post" th:action="@{/serie/{ns}/capitulo/{nc}/tarea/{nt}/estado(ns=${serie.nombre}, nc=${capitulo.nombre}, nt=${ccTask.nombre})}">
+                                <select name="estado" onchange="this.form.submit()" class="form-select form-select-sm">
+                                    <!-- LÓGICA DE TAREA CC -->
+                                    <th:block th:if="${ccTask.nombre == 'CC'}">
+                                        <!-- Opciones para LÍDER -->
+                                        <th:block th:if="${usuarioActual.role.name() == 'ROLE_LIDER'}">
+                                            <option th:each="e : ${todosLosEstados}"
+                                                    th:value="${e}"
+                                                    th:text="${e}"
+                                                    th:selected="${e == ccTask.estadoTarea}">
+                                                Estado
+                                            </option>
+                                        </th:block>
+                                        <!-- Opciones para USUARIO_CC -->
+                                        <th:block th:if="${usuarioActual.role.name() == 'ROLE_QC'}">
+                                            <option th:each="e : ${todosLosEstados}"
+                                                    th:value="${e}"
+                                                    th:text="${e}"
+                                                    th:selected="${e == ccTask.estadoTarea}"
+                                                    th:if="${
+                                                        e == ccTask.estadoTarea or
+                                                        ((ccTask.estadoTarea.name() == 'NoAsignado' or ccTask.estadoTarea.name() == 'Repetir') and e.name() == 'Asignado') or
+                                                        (ccTask.estadoTarea.name() == 'Asignado' and e.name() == 'Completado') or
+                                                        (ccTask.estadoTarea.name() == 'Completado' and e.name() == 'Repetir')
+                                                    }">
+                                                Estado
+                                            </option>
+                                        </th:block>
+                                    </th:block>
+                                </select>
+                                <noscript><button type="submit" class="btn btn-sm btn-primary mt-2">Actualizar</button></noscript>
+                            </form>
+                        </div>
+                        <div th:unless="${canModifyCCTaskStatus}">
+                            <p class="mb-0" th:text="${ccTask.estadoTarea}">Estado de Tarea</p>
+                        </div>
                     </div>
                 </div>
 
@@ -130,6 +178,7 @@
             </div>
         </div>
     </div>
+</div>
 
 </th:block>
 </html>

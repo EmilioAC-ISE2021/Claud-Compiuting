@@ -36,11 +36,11 @@ public class GrupoService {
         User usuario = userRepository.findByUsername(nombreUsuario)
                 .orElseThrow(() -> new RuntimeException("No se encontró el usuario: " + nombreUsuario));
 
-        grupo.agregarUsuario(usuario); // Adds user to grupo's collection
-        usuario.addGrupo(grupo);       // Adds group to user's collection (and also adds user to group's collection again)
+        grupo.agregarUsuario(usuario); // Añade el usuario a la colección del grupo
+        usuario.addGrupo(grupo);       // Añade el grupo a la colección del usuario (y también añade el usuario a la colección del grupo de nuevo)
 
-        // Save both entities to ensure changes are persisted
-        grupoRepository.saveAndFlush(grupo); // Force flush for Grupo
-        userRepository.saveAndFlush(usuario); // Force flush for User
+        // Guarda ambas entidades para asegurar que los cambios persistan
+        grupoRepository.saveAndFlush(grupo); // Forzar el guardado para Grupo
+        userRepository.saveAndFlush(usuario); // Forzar el guardado para Usuario
     }
 }

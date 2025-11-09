@@ -136,7 +136,7 @@ public class SerieService {
     
             String usuarioAsignado = tareaAActualizar.getUsuarioAsignado();
             String nombreUsuarioActual = usuarioActual.getUsername();
-            EstadosTareas estadoActual = tareaAActualizar.getEstadoTarea(); // Get current state
+            EstadosTareas estadoActual = tareaAActualizar.getEstadoTarea(); // Obtener estado actual
     
             // Lógica para LÍDER: Puede cambiar el estado como quiera
             if (usuarioActual.getRole() == cc.sars.model.Role.ROLE_LIDER) {
@@ -144,21 +144,42 @@ public class SerieService {
                     tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual);
                 } else if (nuevoEstado == EstadosTareas.NoAsignado || nuevoEstado == EstadosTareas.Repetir) {
                     tareaAActualizar.setUsuarioAsignado("NADIE");
+                } else if (nuevoEstado == EstadosTareas.Completado) {
+                    // Cuando un líder completa una tarea, debe ser asignada al líder que la completó.
+                    tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual);
                 }
             }
-            // Lógica para USUARIO: Restricciones
+            // Lógica para USUARIO y USUARIO_CC: Restricciones
             else {
-                // Condición principal: Solo puede cambiar si la tarea está asignada a NADIE o a sí mismo
-                if (!usuarioAsignado.equals("NADIE") && !usuarioAsignado.equals(nombreUsuarioActual)) {
+                // Comprobar si la tarea CC de este capítulo está completada
+                Optional<Tarea> ccTaskOptional = capitulo.getTareas().stream()
+                        .filter(t -> t.getNombre().equals("CC"))
+                        .findFirst();
+
+                if (ccTaskOptional.isPresent() && ccTaskOptional.get().getEstadoTarea() == EstadosTareas.Completado) {
+                    // Si la tarea CC está completada, solo el LIDER puede cambiar el estado de la tarea.
+                    // Como estamos en el bloque 'else' (no LIDER), lanzar excepción.
+                    throw new RuntimeException("No puedes cambiar el estado de las tareas en este capítulo porque la tarea 'CC' está completada.");
+                }
+                
+                // Condición especial para ROLE_QC: puede marcar como "Repetir" una tarea "Completado" de otro.
+                if (usuarioActual.getRole() == cc.sars.model.Role.ROLE_QC &&
+                    nuevoEstado == EstadosTareas.Repetir &&
+                    estadoActual == EstadosTareas.Completado) {
+                    
+                    tareaAActualizar.setUsuarioAsignado("NADIE"); // Se libera al repetir
+                }
+                // Condición principal para ambos: Solo puede cambiar si la tarea está asignada a NADIE o a sí mismo
+                else if (!usuarioAsignado.equals("NADIE") && !usuarioAsignado.equals(nombreUsuarioActual)) {
                     throw new RuntimeException("No puedes cambiar el estado de una tarea asignada a " + usuarioAsignado + ".");
                 }
     
                 // Transiciones permitidas para usuarios
-                if (estadoActual == EstadosTareas.NoAsignado || estadoActual == EstadosTareas.Repetir) {
+                else if (estadoActual == EstadosTareas.NoAsignado || estadoActual == EstadosTareas.Repetir) {
                     if (nuevoEstado == EstadosTareas.Asignado) {
                         tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual); // Se auto-asigna
-                    } else if (nuevoEstado == EstadosTareas.Completado) { // Allow direct completion of unassigned/repeated tasks
-                        tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual); // Assign to current user
+                    } else if (nuevoEstado == EstadosTareas.Completado) { // Permitir la finalización directa de tareas no asignadas/repetidas
+                        tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual); // Asignar al usuario actual
                     }
                     else {
                         throw new RuntimeException("Solo puedes asignarte esta tarea.");
