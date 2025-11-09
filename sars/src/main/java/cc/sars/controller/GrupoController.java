@@ -40,11 +40,11 @@ public class GrupoController {
     public String getGestionPage(@AuthenticationPrincipal User user, Model model) {
 
         // Recargar el usuario para asegurar que sus grupos estén actualizados
-        User currentUser = usuarioService.findByUsername(user.getUsername())
+        User usuarioActual = usuarioService.findByUsername(user.getUsername())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
 
         // 1. Encontrar el grupo del LIDER
-        Grupo miGrupo = grupoService.getGrupoPorNombre(currentUser.getGrupos().stream().findFirst().orElseThrow(() -> new RuntimeException("Líder sin grupo.")).getNombre());
+        Grupo miGrupo = grupoService.getGrupoPorNombre(usuarioActual.getGrupos().stream().findFirst().orElseThrow(() -> new RuntimeException("Líder sin grupo.")).getNombre());
 
         // 2. Obtener los usuarios que YA están en el grupo
         Set<User> usuariosEnGrupo = miGrupo.getUsuarios();
@@ -62,6 +62,8 @@ public class GrupoController {
         model.addAttribute("usuariosEnGrupo", usuariosEnGrupo);
         model.addAttribute("usuariosDisponibles", usuariosDisponibles);
         model.addAttribute("rolesDisponibles", Arrays.asList(Role.ROLE_LIDER, Role.ROLE_USER, Role.ROLE_QC)); // Pasar los roles disponibles
+        logger.debug("Usuario autenticado en el modelo: {}", usuarioActual.getUsername()); // Debug log
+        model.addAttribute("user", usuarioActual); // Añadir el usuario autenticado al modelo
 
         return "app/gestionar-grupo"; // Devuelve gestionar-grupo.html
     }
@@ -108,6 +110,39 @@ public class GrupoController {
             usuarioService.changeUserRole(usernameToChange, newRole, nombreGrupo);
             redirectAttributes.addFlashAttribute("success_message", "Rol de usuario actualizado correctamente.");
         } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error_message", e.getMessage());
+        }
+        return "redirect:/grupo/gestionar";
+    }
+
+    /**
+     * Procesa la eliminación de un usuario de un grupo.
+     */
+    @PostMapping("/grupo/gestionar/eliminarUsuario")
+    public String eliminarUsuario(
+            @AuthenticationPrincipal User user,
+            @RequestParam("nombreGrupo") String nombreGrupo,
+            @RequestParam("username") String usernameAEliminar,
+            RedirectAttributes redirectAttributes) {
+
+        // Recargar el usuario para asegurar que sus grupos estén actualizados
+        User usuarioActual = usuarioService.findByUsername(user.getUsername())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+
+        // Verificar que el usuario autenticado es líder del grupo
+        boolean esLiderDeEsteGrupo = usuarioActual.getGrupos().stream()
+                .anyMatch(g -> g.getNombre().equals(nombreGrupo) && usuarioActual.getRole().equals(Role.ROLE_LIDER));
+
+        if (!esLiderDeEsteGrupo) {
+            redirectAttributes.addFlashAttribute("error_message", "No tienes permiso para eliminar usuarios de este grupo.");
+            return "redirect:/grupo/gestionar";
+        }
+
+        try {
+            grupoService.eliminarUsuarioDeGrupo(nombreGrupo, usernameAEliminar);
+            redirectAttributes.addFlashAttribute("success_message", "Usuario '" + usernameAEliminar + "' eliminado del grupo correctamente.");
+        } catch (RuntimeException e) {
+            logger.error("Error al eliminar usuario del grupo: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error_message", e.getMessage());
         }
         return "redirect:/grupo/gestionar";

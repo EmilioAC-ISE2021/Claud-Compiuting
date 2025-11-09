@@ -43,4 +43,23 @@ public class GrupoService {
         grupoRepository.saveAndFlush(grupo); // Forzar el guardado para Grupo
         userRepository.saveAndFlush(usuario); // Forzar el guardado para Usuario
     }
+
+    /**
+     * Elimina un usuario de un grupo.
+     */
+    public void eliminarUsuarioDeGrupo(String nombreGrupo, String username) {
+        Grupo grupo = getGrupoPorNombre(nombreGrupo);
+        User usuario = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("No se encontró el usuario: " + username));
+
+        if (!grupo.getUsuarios().contains(usuario)) {
+            throw new RuntimeException("El usuario " + username + " no pertenece al grupo " + grupo.getNombre());
+        }
+
+        grupo.removeUsuario(usuario); // Elimina el usuario de la colección del grupo
+        usuario.removeGrupo(grupo);   // Elimina el grupo de la colección del usuario
+
+        grupoRepository.saveAndFlush(grupo);
+        userRepository.saveAndFlush(usuario);
+    }
 }

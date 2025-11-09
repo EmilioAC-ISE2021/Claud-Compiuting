@@ -40,8 +40,14 @@ public class Grupo {
     public Set<User> getUsuarios() { // Devuelve Set<User>
         return usuarios;
     }
+    public void setUsuarios(Set<User> usuarios) {
+        this.usuarios = usuarios;
+    }
     public void agregarUsuario(User usuario) { // Acepta User
         this.usuarios.add(usuario);
+    }
+    public void removeUsuario(User usuario) {
+        this.usuarios.remove(usuario);
     }
     
     public List<Serie> getSeries() {

@@ -10,6 +10,7 @@ import cc.sars.model.User; // Importar User
 import cc.sars.repository.CapituloRepository;
 import cc.sars.repository.GrupoRepository;
 import cc.sars.repository.SerieRepository;
+import cc.sars.repository.UserRepository; // Added import
 import org.junit.jupiter.api.BeforeEach; // Importar
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.HashSet; // Added import for HashSet
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,8 +36,12 @@ public class SerieServiceTest {
     private CapituloRepository capituloRepository;
     @Mock
     private GrupoRepository grupoRepository;
+    @Mock
+    private UserRepository userRepository; // Añadido para pruebas de GrupoService
     @InjectMocks
     private SerieService serieService;
+    @InjectMocks
+    private GrupoService grupoService; // Añadido para pruebas de GrupoService
 
     // --- Define los usuarios simulados para los tests de estado ---
     private User usuarioSimuladoUser;
@@ -316,5 +322,64 @@ public class SerieServiceTest {
         .hasMessageContaining("No puedes cambiar el estado de las tareas en este capítulo porque la tarea 'CC' está completada.");
 
         verify(capituloRepository, never()).save(any(Capitulo.class)); // No save should happen
+    }
+
+    /**
+     * Prueba que se puede eliminar un usuario de un grupo correctamente.
+     */
+    @Test
+    void testEliminarUsuarioDeGrupo_Success() {
+        // ARRANGE
+        Grupo testGrupo = new Grupo("GrupoTestEliminar");
+        User testUser = new User("usuarioAEliminar", "pass", Role.ROLE_USER);
+
+        // Inicializar sets para evitar NullPointerExceptions
+        testGrupo.setUsuarios(new HashSet<>());
+        testUser.setGrupos(new HashSet<>());
+
+        testGrupo.agregarUsuario(testUser); // Añadir usuario al grupo
+        testUser.addGrupo(testGrupo);       // Añadir grupo al usuario
+
+        when(grupoRepository.findByNombre(testGrupo.getNombre())).thenReturn(Optional.of(testGrupo));
+        when(userRepository.findByUsername(testUser.getUsername())).thenReturn(Optional.of(testUser));
+        when(grupoRepository.saveAndFlush(any(Grupo.class))).thenReturn(testGrupo);
+        when(userRepository.saveAndFlush(any(User.class))).thenReturn(testUser);
+
+        // ACT
+        grupoService.eliminarUsuarioDeGrupo(testGrupo.getNombre(), testUser.getUsername());
+
+        // ASSERT
+        assertThat(testGrupo.getUsuarios()).doesNotContain(testUser);
+        assertThat(testUser.getGrupos()).doesNotContain(testGrupo);
+        verify(grupoRepository, times(1)).saveAndFlush(testGrupo);
+        verify(userRepository, times(1)).saveAndFlush(testUser);
+    }
+
+    /**
+     * Prueba que se puede añadir un usuario a un grupo correctamente.
+     */
+    @Test
+    void testAgregarUsuarioAGrupo_Success() {
+        // ARRANGE
+        Grupo testGrupo = new Grupo("GrupoTestAgregar");
+        User testUser = new User("usuarioAAgregar", "pass", Role.ROLE_USER);
+
+        // Inicializar sets para evitar NullPointerExceptions
+        testGrupo.setUsuarios(new HashSet<>());
+        testUser.setGrupos(new HashSet<>());
+
+        when(grupoRepository.findByNombre(testGrupo.getNombre())).thenReturn(Optional.of(testGrupo));
+        when(userRepository.findByUsername(testUser.getUsername())).thenReturn(Optional.of(testUser));
+        when(grupoRepository.saveAndFlush(any(Grupo.class))).thenReturn(testGrupo);
+        when(userRepository.saveAndFlush(any(User.class))).thenReturn(testUser);
+
+        // ACT
+        grupoService.agregarUsuarioAGrupo(testUser.getUsername(), testGrupo.getNombre());
+
+        // ASSERT
+        assertThat(testGrupo.getUsuarios()).contains(testUser);
+        assertThat(testUser.getGrupos()).contains(testGrupo);
+        verify(grupoRepository, times(1)).saveAndFlush(testGrupo);
+        verify(userRepository, times(1)).saveAndFlush(testUser);
     }
 }

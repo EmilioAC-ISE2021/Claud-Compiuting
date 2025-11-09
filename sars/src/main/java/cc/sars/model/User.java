@@ -51,9 +51,16 @@ public class User implements UserDetails {
     public Set<Grupo> getGrupos() {
         return grupos;
     }
+    public void setGrupos(Set<Grupo> grupos) {
+        this.grupos = grupos;
+    }
     public void addGrupo(Grupo grupo) {
         this.grupos.add(grupo);
         grupo.getUsuarios().add(this);
+    }
+    public void removeGrupo(Grupo grupo) {
+        this.grupos.remove(grupo);
+        grupo.getUsuarios().remove(this);
     }
     
     // --- Métodos Requeridos por UserDetails ---

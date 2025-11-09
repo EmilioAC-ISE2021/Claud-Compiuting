@@ -43,7 +43,7 @@
                 <li th:each="usuario : ${usuariosEnGrupo}" class="list-group-item d-flex justify-content-between align-items-center">
                     <span th:text="${usuario.username}">username.miembro</span>
                     
-                    <form th:action="@{/grupo/gestionar/cambiar-rol}" method="post" class="d-inline-flex align-items-center">
+                    <form th:action="@{/grupo/gestionar/cambiar-rol}" method="post" class="d-inline-flex align-items-center ms-auto">
                         <input type="hidden" name="username" th:value="${usuario.username}">
                         <select name="newRole" class="form-select form-select-sm me-2" onchange="this.form.submit()">
                             <option th:each="role : ${rolesDisponibles}"
@@ -54,6 +54,14 @@
                             </option>
                         </select>
                         <noscript><button type="submit" class="btn btn-sm btn-primary">Cambiar Rol</button></noscript>
+                    </form>
+                    <form th:action="@{/grupo/gestionar/eliminarUsuario}" method="post" class="d-inline-flex ms-2">
+                        <input type="hidden" name="nombreGrupo" th:value="${grupo.nombre}">
+                        <input type="hidden" name="username" th:value="${usuario.username}">
+                        <button type="submit" class="btn btn-danger btn-sm"
+                                th:onclick="${usuario.username == user.username} ? 'alert(\'No puedes eliminarte a ti mismo del grupo.\'); return false;' : 'return confirm(\'¿Estás seguro de que quieres eliminar a este usuario del grupo?\');'">
+                            Eliminar
+                        </button>
                     </form>
                 </li>
             </ul>
