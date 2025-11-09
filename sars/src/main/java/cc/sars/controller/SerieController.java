@@ -46,6 +46,7 @@ public class SerieController {
         model.addAttribute("serie", serie);
         model.addAttribute("todosLosEstados", serieService.getTodosLosEstados());
         model.addAttribute("usuarioActual", usuarioActual); // Añadir el usuario actual al modelo
+        model.addAttribute("usuariosDelGrupo", serie.getGrupo().getUsuarios()); // Añadir los usuarios del grupo de la serie al modelo
         return "app/serie-detalle";
     }
 
@@ -88,6 +89,23 @@ public class SerieController {
         try {
             // Pasar el usuario al servicio
             serieService.updateTareaEstado(nombreCapitulo, nombreTarea, estado, usuarioActual);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return "redirect:/serie/" + nombreSerie;
+    }
+
+    /**
+     * Mapeo para procesar la asignación de un usuario a una tarea.
+     */
+    @PostMapping("/serie/{nombreSerie}/capitulo/{nombreCapitulo}/tarea/{nombreTarea}/asignarUsuario")
+    public String asignarUsuarioATarea(@PathVariable String nombreSerie,
+                                       @PathVariable String nombreCapitulo,
+                                       @PathVariable String nombreTarea,
+                                       @RequestParam String nuevoUsuarioAsignado,
+                                       @AuthenticationPrincipal User usuarioActual) { // El líder que realiza la acción
+        try {
+            serieService.asignarUsuarioATarea(nombreSerie, nombreCapitulo, nombreTarea, nuevoUsuarioAsignado, usuarioActual);
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }

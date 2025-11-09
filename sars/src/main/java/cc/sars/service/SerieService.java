@@ -9,6 +9,7 @@ import cc.sars.model.User; // Importar User
 import cc.sars.repository.CapituloRepository;
 import cc.sars.repository.GrupoRepository;
 import cc.sars.repository.SerieRepository;
+import cc.sars.repository.UserRepository; // Added import
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,11 +24,13 @@ public class SerieService {
     private final SerieRepository serieRepository;
     private final CapituloRepository capituloRepository;
     private final GrupoRepository grupoRepository;
+    private final UserRepository userRepository; // Añadir dependencia
 
-    public SerieService(SerieRepository serieRepository, CapituloRepository capituloRepository, GrupoRepository grupoRepository) {
+    public SerieService(SerieRepository serieRepository, CapituloRepository capituloRepository, GrupoRepository grupoRepository, UserRepository userRepository) { // Modificar constructor
         this.serieRepository = serieRepository;
         this.capituloRepository = capituloRepository;
         this.grupoRepository = grupoRepository;
+        this.userRepository = userRepository;
     }
 
     // --- MÉTODOS PARA SERIES ---
@@ -206,6 +209,37 @@ public class SerieService {
             tareaAActualizar.setEstadoTarea(nuevoEstado);
             return capituloRepository.save(capitulo);
         }
+    
+    /**
+     * Asigna un usuario a una tarea específica. Solo un LÍDER puede realizar esta acción.
+     */
+    public void asignarUsuarioATarea(String nombreSerie, String nombreCapitulo, String nombreTarea, String nuevoUsuarioAsignadoUsername, User lider) {
+        // 1. Autorización: Solo un LÍDER puede asignar usuarios
+        if (lider.getRole() != cc.sars.model.Role.ROLE_LIDER) {
+            throw new RuntimeException("Solo un LÍDER puede asignar usuarios a las tareas.");
+        }
+
+        // 2. Encontrar el capítulo
+        Capitulo capitulo = capituloRepository.findByNombre(nombreCapitulo)
+                .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
+
+        // 3. Encontrar la tarea
+        Tarea tareaAActualizar = capitulo.getTareas().stream()
+                .filter(tarea -> tarea.getNombre().equals(nombreTarea))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No se encontró la tarea: " + nombreTarea));
+
+        // 4. Verificar que el nuevo usuario asignado existe
+        User nuevoUsuario = userRepository.findByUsername(nuevoUsuarioAsignadoUsername)
+                .orElseThrow(() -> new RuntimeException("No se encontró el usuario a asignar: " + nuevoUsuarioAsignadoUsername));
+
+        // 5. Actualizar el usuario asignado
+        tareaAActualizar.setUsuarioAsignado(nuevoUsuario.getUsername());
+
+        // 6. Guardar el capítulo (las tareas se guardan en cascada)
+        capituloRepository.save(capitulo);
+    }
+
     /**
      * Devuelve todos los valores posibles del Enum EstadosTareas.
      */

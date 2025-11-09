@@ -51,10 +51,27 @@
                                      (tarea.estadoTarea.name() == 'Completado' ? 'border-success-subtle' : 
                                      (tarea.estadoTarea.name() == 'Repetir' ? 'border-danger-subtle' : 
                                      (tarea.estadoTarea.name() == 'Asignado' ? 'border-primary-subtle' : '')))}"
-                     th:with="canModifyTaskStatus=${isLeader or (not ccCompleted and ((isUser) or (isQC and (tarea.estadoTarea.name() == 'Completado' or tarea.usuarioAsignado == 'NADIE' or tarea.usuarioAsignado == usuarioActual.username))))}">
+                     th:with="canModifyTaskStatus=${isLeader or (not ccCompleted and ( (isUser and (tarea.usuarioAsignado == 'NADIE' or tarea.usuarioAsignado == usuarioActual.username)) or (isQC and (tarea.estadoTarea.name() == 'Completado' or tarea.usuarioAsignado == 'NADIE' or tarea.usuarioAsignado == usuarioActual.username)) ) )}">
                     
                     <strong th:text="${tarea.nombre}">Nombre de Tarea</strong>
-                    <p class="mb-1" th:text="'Usuario: ' + ${tarea.usuarioAsignado}">Usuario: Nadie</p>
+                    
+                    <!-- Desplegable para asignar usuario (solo para LIDER y tareas Asignado/Completado) -->
+                    <div th:if="${isLeader and (tarea.estadoTarea.name() == 'Asignado' or tarea.estadoTarea.name() == 'Completado')}">
+                        <form method="post" th:action="@{/serie/{ns}/capitulo/{nc}/tarea/{nt}/asignarUsuario(ns=${serie.nombre}, nc=${capitulo.nombre}, nt=${tarea.nombre})}">
+                            <label for="asignarUsuario" class="form-label-sm mb-0">Usuario:</label>
+                            <select name="nuevoUsuarioAsignado" onchange="this.form.submit()" class="form-select form-select-sm">
+                                <option th:each="userDelGrupo : ${usuariosDelGrupo}"
+                                        th:value="${userDelGrupo.username}"
+                                        th:text="${userDelGrupo.username}"
+                                        th:selected="${userDelGrupo.username == tarea.usuarioAsignado}">
+                                    Usuario
+                                </option>
+                            </select>
+                            <noscript><button type="submit" class="btn btn-sm btn-primary mt-2">Asignar</button></noscript>
+                        </form>
+                    </div>
+                    <p th:unless="${isLeader and (tarea.estadoTarea.name() == 'Asignado' or tarea.estadoTarea.name() == 'Completado')}"
+                       class="mb-1" th:text="'Usuario: ' + ${tarea.usuarioAsignado}">Usuario: Nadie</p>
 
                     <!-- Lógica para mostrar el desplegable o solo el texto del estado -->
                     <div th:if="${canModifyTaskStatus}">
@@ -123,7 +140,24 @@
                          th:with="canModifyCCTaskStatus=${isLeader or (not ccCompleted and isQC and (ccTask.estadoTarea.name() == 'Completado' or ccTask.usuarioAsignado == 'NADIE' or ccTask.usuarioAsignado == usuarioActual.username))}">
                         
                         <strong th:text="${ccTask.nombre}">Nombre de Tarea</strong>
-                        <p class="mb-1" th:text="'Usuario: ' + ${ccTask.usuarioAsignado}">Usuario: Nadie</p>
+                        
+                        <!-- Desplegable para asignar usuario (solo para LIDER y tareas Asignado/Completado) -->
+                        <div th:if="${isLeader and (ccTask.estadoTarea.name() == 'Asignado' or ccTask.estadoTarea.name() == 'Completado')}">
+                            <form method="post" th:action="@{/serie/{ns}/capitulo/{nc}/tarea/{nt}/asignarUsuario(ns=${serie.nombre}, nc=${capitulo.nombre}, nt=${ccTask.nombre})}">
+                                <label for="asignarUsuarioCC" class="form-label-sm mb-0">Usuario:</label>
+                                <select name="nuevoUsuarioAsignado" onchange="this.form.submit()" class="form-select form-select-sm">
+                                    <option th:each="userDelGrupo : ${usuariosDelGrupo}"
+                                            th:value="${userDelGrupo.username}"
+                                            th:text="${userDelGrupo.username}"
+                                            th:selected="${userDelGrupo.username == ccTask.usuarioAsignado}">
+                                        Usuario
+                                    </option>
+                                </select>
+                                <noscript><button type="submit" class="btn btn-sm btn-primary mt-2">Asignar</button></noscript>
+                            </form>
+                        </div>
+                        <p th:unless="${isLeader and (ccTask.estadoTarea.name() == 'Asignado' or ccTask.estadoTarea.name() == 'Completado')}"
+                           class="mb-1" th:text="'Usuario: ' + ${ccTask.usuarioAsignado}">Usuario: Nadie</p>
 
                         <!-- Lógica para mostrar el desplegable o solo el texto del estado para CC Task -->
                         <div th:if="${canModifyCCTaskStatus}">
