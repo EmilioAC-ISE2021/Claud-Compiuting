@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Controller
 public class SerieController {
@@ -43,18 +45,25 @@ public class SerieController {
     public String getSerieDetalle(@PathVariable String nombreSerie, Model model, @AuthenticationPrincipal User usuarioActual) {
         Serie serie = serieService.getSerieByNombre(nombreSerie)
                 .orElseThrow(() -> new NoSuchElementException("Serie no encontrada: " + nombreSerie));
+        
+        // Prepara una lista solo con los nombres de usuario para evitar problemas de serialización
+        List<String> nombresUsuarios = serie.getGrupo().getUsuarios().stream()
+                                            .map(User::getUsername)
+                                            .collect(Collectors.toList());
+
         model.addAttribute("serie", serie);
         model.addAttribute("todosLosEstados", serieService.getTodosLosEstados());
-        model.addAttribute("usuarioActual", usuarioActual); // Añadir el usuario actual al modelo
-        model.addAttribute("usuariosDelGrupo", serie.getGrupo().getUsuarios()); // Añadir los usuarios del grupo de la serie al modelo
+        model.addAttribute("usuarioActual", usuarioActual);
+        model.addAttribute("usuariosDelGrupo", nombresUsuarios); // Pasa la lista de nombres
         return "app/serie-detalle";
     }
 
     @PostMapping("/serie/{nombreSerie}/capitulo/crear")
     public String createCapitulo(@PathVariable String nombreSerie,
-                                 @RequestParam String nombreCapitulo) {
+                                 @RequestParam String nombresCapitulos,
+                                 @RequestParam(required = false) String[] tareasEnMasa) {
         try {
-            serieService.addCapituloToSerie(nombreSerie, nombreCapitulo);
+            serieService.addCapitulosToSerie(nombreSerie, nombresCapitulos, tareasEnMasa);
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }

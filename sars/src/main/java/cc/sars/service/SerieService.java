@@ -105,6 +105,53 @@ public class SerieService {
         return serieRepository.save(serie);
     }
 
+    /**
+     * Crea múltiples capítulos a partir de una cadena de nombres separados por saltos de línea
+     * y les asigna tareas en masa.
+     */
+    public Serie addCapitulosToSerie(String nombreSerie, String nombresCapitulos, String[] tareasEnMasa) {
+        Serie serie = getSerieByNombre(nombreSerie)
+                .orElseThrow(() -> new RuntimeException("No se encontró la serie: " + nombreSerie));
+
+        // Dividir la cadena de nombres de capítulos por saltos de línea y procesar cada uno
+        Arrays.stream(nombresCapitulos.split("\\r?\\n"))
+              .map(String::trim)
+              .filter(nombre -> !nombre.isEmpty())
+              .forEach(nombreCapitulo -> {
+                  if (capituloRepository.findByNombre(nombreCapitulo).isPresent()) {
+                      System.err.println("Advertencia: El capítulo con el nombre '" + nombreCapitulo + "' ya existe y será omitido.");
+                      return; // Saltar este capítulo y continuar con el siguiente
+                  }
+
+                  Capitulo nuevoCapitulo = new Capitulo(nombreCapitulo);
+
+                  // Añadir las tareas en masa si existen
+                  if (tareasEnMasa != null) {
+                      Arrays.stream(tareasEnMasa)
+                            .map(String::trim)
+                            .filter(tareaData -> !tareaData.isEmpty())
+                            .forEach(tareaData -> {
+                                String[] parts = tareaData.split("###");
+                                if (parts.length == 3) {
+                                    String nombreTarea = parts[0];
+                                    EstadosTareas estadoTarea = EstadosTareas.valueOf(parts[1]);
+                                    String usuarioAsignado = parts[2];
+
+                                    Tarea nuevaTarea = new Tarea(nombreTarea);
+                                    nuevaTarea.setEstadoTarea(estadoTarea);
+                                    nuevaTarea.setUsuarioAsignado(usuarioAsignado);
+                                    nuevoCapitulo.anyadirTarea(nuevaTarea);
+                                } else {
+                                    System.err.println("Advertencia: Formato de tarea en masa incorrecto: " + tareaData);
+                                }
+                            });
+                  }
+                  serie.addCapitulo(nuevoCapitulo);
+              });
+
+        return serieRepository.save(serie);
+    }
+
     // --- MÉTODOS PARA TAREAS ---
 
     /**

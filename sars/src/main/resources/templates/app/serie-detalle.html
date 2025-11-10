@@ -11,13 +11,121 @@
 
     <div sec:authorize="hasRole('ROLE_LIDER')">
         <div class="form-add-capitulo card p-3 mb-4">
-            <h4 class="mb-3">Añadir Capítulo</h4>
-            <form method="post" th:action="@{/serie/{nombreSerie}/capitulo/crear(nombreSerie=${serie.nombre})}">
+            <h4 class="mb-3">Añadir Capítulos</h4>
+            <form id="formCrearCapitulos" method="post" th:action="@{/serie/{nombreSerie}/capitulo/crear(nombreSerie=${serie.nombre})}">
                 <div class="mb-3">
-                    <input type="text" class="form-control" name="nombreCapitulo" placeholder="Nombre del nuevo capítulo" required>
+                    <label for="nombresCapitulos" class="form-label">Nombres de los Capítulos (uno por línea)</label>
+                    <textarea class="form-control" id="nombresCapitulos" name="nombresCapitulos" rows="5" placeholder="Capítulo 1&#10;Capítulo 2&#10;Capítulo 3" required></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Añadir Capítulo</button>
+
+                <hr>
+
+                <h5 class="mb-3">Tareas comunes</h5>
+                <div id="task-template-container">
+                    <!-- Fila de Tarea CC por defecto -->
+                    <div class="row g-3 align-items-center mb-2" id="fila-tarea-0">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="nombre-tarea-0" value="CC" readonly onchange="actualizarInputOcultoTarea(0)">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="estado-tarea-0" onchange="actualizarInputOcultoTarea(0)">
+                                <option th:each="estado : ${todosLosEstados}" th:value="${estado}" th:text="${estado}" th:selected="${estado.toString() == 'NoAsignado'}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="usuario-tarea-0" onchange="actualizarInputOcultoTarea(0)">
+                                <option value="NADIE" selected>-- Sin Asignar --</option>
+                                <option th:each="username : ${usuariosDelGrupo}" th:value="${username}" th:text="${username}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <!-- Botón de eliminar oculto para la tarea CC por defecto -->
+                        </div>
+                        <input type="hidden" name="tareasEnMasa" id="input-oculto-tarea-0" value="CC###NoAsignado###NADIE">
+                    </div>
+                    <!-- Las filas de tareas adicionales se añadirán aquí dinámicamente -->
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="añadirFilaTarea()">+ Añadir Tarea</button>
+
+                <hr>
+                
+                <button type="submit" class="btn btn-primary mt-3">Añadir Capítulos</button>
             </form>
+
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+                let indiceTarea = 1; // Empezar en 1 porque la tarea 0 (CC) ya está hardcodeada
+                const usuariosDisponibles = /*[[${usuariosDelGrupo}]]*/ [];
+                const estadosDisponibles = /*[[${todosLosEstados}]]*/ [];
+
+                // Función para actualizar el valor del input oculto de la tarea
+                function actualizarInputOcultoTarea(indice) {
+                    const nombre = document.getElementById(`nombre-tarea-${indice}`).value;
+                    const usuario = document.getElementById(`usuario-tarea-${indice}`).value;
+                    const estado = document.getElementById(`estado-tarea-${indice}`).value;
+                    const inputOculto = document.getElementById(`input-oculto-tarea-${indice}`);
+                    
+                    if (nombre) { // Solo establecer el valor si el nombre está presente
+                        inputOculto.value = `${nombre}###${estado}###${usuario}`;
+                    } else {
+                        inputOculto.value = ''; // Limpiar valor si el nombre está vacío
+                    }
+                }
+
+                // Función para añadir una nueva fila de tarea a la plantilla
+                function añadirFilaTarea() {
+                    const contenedor = document.getElementById('task-template-container');
+                    
+                    const filaTarea = document.createElement('div');
+                    filaTarea.classList.add('row', 'g-3', 'align-items-center', 'mb-2');
+                    filaTarea.setAttribute('id', 'fila-tarea-' + indiceTarea);
+
+                    let opcionesUsuario = '<option value="NADIE" selected>-- Sin Asignar --</option>';
+                    usuariosDisponibles.forEach(username => {
+                        opcionesUsuario += `<option value="${username}">${username}</option>`;
+                    });
+
+                    let opcionesEstado = '';
+                    estadosDisponibles.forEach(estado => {
+                        const seleccionado = estado.toString() === 'NoAsignado' ? 'selected' : '';
+                        opcionesEstado += `<option value="${estado}" ${seleccionado}>${estado}</option>`;
+                    });
+
+                    filaTarea.innerHTML = `
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="nombre-tarea-${indiceTarea}" placeholder="Nombre de la tarea" required onchange="actualizarInputOcultoTarea(${indiceTarea})">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="estado-tarea-${indiceTarea}" onchange="actualizarInputOcultoTarea(${indiceTarea})">
+                                ${opcionesEstado}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="usuario-tarea-${indiceTarea}" onchange="actualizarInputOcultoTarea(${indiceTarea})">
+                                ${opcionesUsuario}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="eliminarFilaTarea(${indiceTarea})">Eliminar</button>
+                        </div>
+                        <input type="hidden" name="tareasEnMasa" id="input-oculto-tarea-${indiceTarea}">
+                    `;
+                    
+                    contenedor.appendChild(filaTarea);
+                    // Inicializar el valor del input oculto al añadir la fila
+                    actualizarInputOcultoTarea(indiceTarea);
+                    indiceTarea++;
+                }
+
+                // Función para eliminar una fila de tarea de la plantilla
+                function eliminarFilaTarea(indice) {
+                    const filaTarea = document.getElementById('fila-tarea-' + indice);
+                    if (filaTarea) {
+                        filaTarea.remove();
+                    }
+                }
+                /*]]>*/
+            </script>
         </div>
     </div>
 
@@ -60,10 +168,10 @@
                         <form method="post" th:action="@{/serie/{ns}/capitulo/{nc}/tarea/{nt}/asignarUsuario(ns=${serie.nombre}, nc=${capitulo.nombre}, nt=${tarea.nombre})}">
                             <label for="asignarUsuario" class="form-label-sm mb-0">Usuario:</label>
                             <select name="nuevoUsuarioAsignado" onchange="this.form.submit()" class="form-select form-select-sm">
-                                <option th:each="userDelGrupo : ${usuariosDelGrupo}"
-                                        th:value="${userDelGrupo.username}"
-                                        th:text="${userDelGrupo.username}"
-                                        th:selected="${userDelGrupo.username == tarea.usuarioAsignado}">
+                                <option th:each="username : ${usuariosDelGrupo}"
+                                        th:value="${username}"
+                                        th:text="${username}"
+                                        th:selected="${username == tarea.usuarioAsignado}">
                                     Usuario
                                 </option>
                             </select>
@@ -146,10 +254,10 @@
                             <form method="post" th:action="@{/serie/{ns}/capitulo/{nc}/tarea/{nt}/asignarUsuario(ns=${serie.nombre}, nc=${capitulo.nombre}, nt=${ccTask.nombre})}">
                                 <label for="asignarUsuarioCC" class="form-label-sm mb-0">Usuario:</label>
                                 <select name="nuevoUsuarioAsignado" onchange="this.form.submit()" class="form-select form-select-sm">
-                                    <option th:each="userDelGrupo : ${usuariosDelGrupo}"
-                                            th:value="${userDelGrupo.username}"
-                                            th:text="${userDelGrupo.username}"
-                                            th:selected="${userDelGrupo.username == ccTask.usuarioAsignado}">
+                                    <option th:each="username : ${usuariosDelGrupo}"
+                                            th:value="${username}"
+                                            th:text="${username}"
+                                            th:selected="${username == ccTask.usuarioAsignado}">
                                         Usuario
                                     </option>
                                 </select>
