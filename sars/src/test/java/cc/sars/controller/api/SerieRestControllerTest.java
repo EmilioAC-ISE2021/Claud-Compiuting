@@ -21,6 +21,10 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import cc.sars.controller.api.dto.SerieCreateDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.MediaType;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Optional;
@@ -33,6 +37,9 @@ public class SerieRestControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockBean
     private SerieService serieService;
@@ -77,5 +84,22 @@ public class SerieRestControllerTest {
         // When & Then
         mockMvc.perform(get("/api/series/NonExistent"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createSerie_shouldCreateSerie() throws Exception {
+        // Given
+        SerieCreateDTO serieCreateDTO = new SerieCreateDTO("New Serie", "New Description", "Grupo A");
+        Serie createdSerie = new Serie("New Serie", "New Description");
+
+        when(serieService.createSerie("New Serie", "New Description", "Grupo A")).thenReturn(createdSerie);
+
+        // When & Then
+        mockMvc.perform(post("/api/series")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(serieCreateDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nombreSerie", is("New Serie")))
+                .andExpect(jsonPath("$.descripcion", is("New Description")));
     }
 }

@@ -1,14 +1,13 @@
 package cc.sars.controller.api;
 
+import cc.sars.controller.api.dto.SerieCreateDTO;
 import cc.sars.controller.api.dto.SerieDTO;
 import cc.sars.model.Serie;
 import cc.sars.service.SerieService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,5 +41,13 @@ public class SerieRestController {
         Serie serie = serieService.getSerieByNombre(nombre)
                 .orElseThrow(() -> new cc.sars.exception.SerieNotFoundException("Serie no encontrada con el nombre: " + nombre));
         return new SerieDTO(serie.getNombre(), serie.getDescripcion());
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public SerieDTO createSerie(@RequestBody SerieCreateDTO serieCreateDTO) {
+        log.info("Request to create serie: {}", serieCreateDTO.getNombre());
+        Serie nuevaSerie = serieService.createSerie(serieCreateDTO.getNombre(), serieCreateDTO.getDescripcion(), serieCreateDTO.getNombreGrupo());
+        return new SerieDTO(nuevaSerie.getNombre(), nuevaSerie.getDescripcion());
     }
 }
