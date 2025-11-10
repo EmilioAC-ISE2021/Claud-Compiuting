@@ -37,9 +37,14 @@
         <ul class="list-group mb-4">
             <li th:each="usuario : ${usuarios}" class="list-group-item d-flex justify-content-between align-items-center">
                 <span th:text="${usuario.username}">Nombre de Usuario</span>
-                <form th:action="@{/admin/usuario/eliminar}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar a este usuario? Esta acción es irreversible.');">
+                <form th:action="@{/admin/usuario/eliminar}" method="post"
+                      th:with="restriction=${userDeletionRestrictions.get(usuario.username)}">
                     <input type="hidden" name="username" th:value="${usuario.username}" />
-                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    <button type="submit" class="btn btn-danger btn-sm"
+                            th:disabled="${restriction != null and not #strings.isEmpty(restriction)}"
+                            th:onclick="return confirm('¿Estás seguro de que quieres eliminar a este usuario? Esta acción es irreversible.');">
+                        Eliminar
+                    </button>
                 </form>
             </li>
         </ul>

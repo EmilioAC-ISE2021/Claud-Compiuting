@@ -59,10 +59,15 @@ public class GrupoController {
                 .filter(u -> u.getRole() != Role.ROLE_ADMIN) // Excluir usuarios ADMIN
                 .collect(Collectors.toList());
 
+        long liderCount = usuariosEnGrupo.stream()
+                .filter(u -> u.getRole() == Role.ROLE_LIDER)
+                .count();
+
         model.addAttribute("grupo", miGrupo);
         model.addAttribute("usuariosEnGrupo", usuariosEnGrupo);
         model.addAttribute("usuariosDisponibles", usuariosDisponibles);
         model.addAttribute("rolesDisponibles", Arrays.asList(Role.ROLE_LIDER, Role.ROLE_USER, Role.ROLE_QC)); // Pasar los roles disponibles
+        model.addAttribute("liderCount", liderCount); // Añadir el conteo de líderes al modelo
         logger.debug("Usuario autenticado en el modelo: {}", usuarioActual.getUsername()); // Debug log
         model.addAttribute("user", usuarioActual); // Añadir el usuario autenticado al modelo
 

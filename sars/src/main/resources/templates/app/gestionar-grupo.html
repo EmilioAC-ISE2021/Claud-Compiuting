@@ -59,7 +59,8 @@
                         <input type="hidden" name="nombreGrupo" th:value="${grupo.nombre}">
                         <input type="hidden" name="username" th:value="${usuario.username}">
                         <button type="submit" class="btn btn-danger btn-sm"
-                                th:onclick="${usuario.username == user.username} ? 'alert(\'No puedes eliminarte a ti mismo del grupo.\'); return false;' : 'return confirm(\'¿Estás seguro de que quieres eliminar a este usuario del grupo?\');'">
+                                th:disabled="${(usuario.username == user.username) or (usuario.role.name() == 'ROLE_LIDER' and liderCount == 1)}"
+                                th:onclick="return confirm('¿Estás seguro de que quieres eliminar a este usuario del grupo?');">
                             Eliminar
                         </button>
                     </form>

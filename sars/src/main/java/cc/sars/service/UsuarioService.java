@@ -143,6 +143,18 @@ public class UsuarioService {
         User userToDelete = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + username));
 
+        // Verificar si el usuario es el único LIDER de algún grupo
+        for (Grupo grupo : userToDelete.getGrupos()) {
+            if (userToDelete.getRole() == Role.ROLE_LIDER) {
+                long liderCount = grupo.getUsuarios().stream()
+                        .filter(u -> u.getRole() == Role.ROLE_LIDER)
+                        .count();
+                if (liderCount == 1 && grupo.getUsuarios().contains(userToDelete)) { // Si es el único líder y pertenece a este grupo
+                    throw new RuntimeException("No se puede eliminar al usuario '" + username + "' porque es el único LIDER del grupo '" + grupo.getNombre() + "'. Elimine el grupo primero.");
+                }
+            }
+        }
+
         // Eliminar el usuario de todos los grupos a los que pertenece
         // Se crea una copia para evitar ConcurrentModificationException
         for (Grupo grupo : new HashSet<>(userToDelete.getGrupos())) { // Usar una copia del Set
@@ -154,4 +166,5 @@ public class UsuarioService {
 
         userRepository.deleteById(username);
     }
+
 }

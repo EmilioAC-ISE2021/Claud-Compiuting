@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
+import java.util.Map; // Importar Map
+import java.util.HashMap; // Importar HashMap
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -33,6 +35,28 @@ public class AdminController {
         model.addAttribute("grupos", allGroups);
         List<User> allUsers = usuarioService.getTodosLosUsuarios(); // Obtener todos los usuarios
         model.addAttribute("usuarios", allUsers); // Añadir usuarios al modelo
+
+        // Calcular restricciones de eliminación para cada usuario
+        Map<String, String> userDeletionRestrictions = new HashMap<>();
+        for (User user : allUsers) {
+            String restrictionMessage = "";
+            if (user.getRole() == Role.ROLE_ADMIN) {
+                restrictionMessage = "No se puede eliminar a un usuario ADMIN.";
+            } else if (user.getRole() == Role.ROLE_LIDER) {
+                for (Grupo grupo : user.getGrupos()) {
+                    long liderCount = grupo.getUsuarios().stream()
+                            .filter(u -> u.getRole() == Role.ROLE_LIDER)
+                            .count();
+                    if (liderCount == 1 && grupo.getUsuarios().contains(user)) {
+                        restrictionMessage = "Es el único LIDER del grupo '" + grupo.getNombre() + "'. Elimine el grupo primero.";
+                        break; // Solo necesitamos una razón
+                    }
+                }
+            }
+            userDeletionRestrictions.put(user.getUsername(), restrictionMessage);
+        }
+        model.addAttribute("userDeletionRestrictions", userDeletionRestrictions);
+
         return "app/admin"; // Devuelve la plantilla app/admin.html
     }
 
