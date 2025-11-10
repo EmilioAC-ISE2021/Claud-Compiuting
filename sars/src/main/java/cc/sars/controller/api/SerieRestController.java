@@ -58,4 +58,11 @@ public class SerieRestController {
         Serie serieActualizada = serieService.updateSerie(nombre, serieUpdateDTO.getDescripcion());
         return new SerieDTO(serieActualizada.getNombre(), serieActualizada.getDescripcion());
     }
+
+    @DeleteMapping("/{nombre}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteSerie(@PathVariable String nombre) {
+        log.info("Request to delete serie: {}", nombre);
+        serieService.deleteSerie(nombre);
+    }
 }

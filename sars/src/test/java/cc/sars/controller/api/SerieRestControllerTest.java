@@ -25,6 +25,9 @@ import cc.sars.controller.api.dto.SerieCreateDTO;
 import cc.sars.controller.api.dto.SerieUpdateDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.MediaType;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -120,5 +123,17 @@ public class SerieRestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombreSerie", is("Serie A")))
                 .andExpect(jsonPath("$.descripcion", is("Updated Description")));
+    }
+
+    @Test
+    void deleteSerie_shouldDeleteSerie() throws Exception {
+        // Given
+        doNothing().when(serieService).deleteSerie("Serie A");
+
+        // When & Then
+        mockMvc.perform(delete("/api/series/Serie A"))
+                .andExpect(status().isNoContent());
+
+        verify(serieService).deleteSerie("Serie A");
     }
 }
