@@ -5,10 +5,12 @@ import cc.sars.model.Role;
 import cc.sars.model.Serie;
 import cc.sars.model.User;
 import cc.sars.service.SerieService;
+import cc.sars.service.UsuarioService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Set;
@@ -17,9 +19,11 @@ import java.util.Set;
 public class IndexController {
 
     private final SerieService serieService;
+    private final UsuarioService usuarioService;
 
-    public IndexController(SerieService serieService) {
+    public IndexController(SerieService serieService, UsuarioService usuarioService) {
         this.serieService = serieService;
+        this.usuarioService = usuarioService;
     }
 
     /**
@@ -31,8 +35,13 @@ public class IndexController {
 
         Set<Grupo> gruposDelUsuario = user.getGrupos();
 
-        // Caso 1: Es un USER y no tiene NINGÚN grupo.
-        if (user.getRole() == Role.ROLE_USER && gruposDelUsuario.isEmpty()) {
+        // Caso 1: No tiene grupo
+        
+        if (gruposDelUsuario.isEmpty()) {
+            //Si hay lider o usuarioCC sin grupos, pasa a ser usuario.
+            if (user.getRole() == Role.ROLE_LIDER || user.getRole() == Role.ROLE_QC){
+                usuarioService.cambiarRolAUsuario(user);
+            }
             return "app/sin-grupo"; // Devuelve la plantilla sin-grupo.html
         }
 

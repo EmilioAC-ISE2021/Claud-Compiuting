@@ -2,10 +2,14 @@ package cc.sars.service;
 
 import cc.sars.model.Grupo;
 import cc.sars.model.User;
+import cc.sars.model.Role; // Importar Role
 import cc.sars.repository.GrupoRepository;
 import cc.sars.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -61,5 +65,23 @@ public class GrupoService {
 
         grupoRepository.saveAndFlush(grupo);
         userRepository.saveAndFlush(usuario);
+    }
+
+    public void deleteGrupo(String nombreGrupo) {
+        Grupo grupo = getGrupoPorNombre(nombreGrupo);
+
+        // Crear una copia del conjunto para evitar ConcurrentModificationException
+        Set<User> usuarios = new HashSet<>(grupo.getUsuarios());
+
+        // Eliminar todos los usuarios del grupo y restablecer sus roles
+        for (User usuario : usuarios) {
+            if (usuario != null) {
+                usuario.removeGrupo(grupo);
+                usuario.setRole(Role.ROLE_USER); // Restablecer rol a ROLE_USER
+                userRepository.save(usuario); // Guardar el usuario actualizado
+            }
+        }
+
+        grupoRepository.delete(grupo);
     }
 }

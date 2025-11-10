@@ -147,4 +147,14 @@ public class GrupoController {
         }
         return "redirect:/grupo/gestionar";
     }
+
+    @PostMapping("/grupo/eliminar")
+    public String deleteGrupo(@RequestParam String nombreGrupo) {
+        try {
+            grupoService.deleteGrupo(nombreGrupo);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return "redirect:/";
+    }
 }

@@ -111,4 +111,9 @@ public class UsuarioService {
         userToModify.setRole(newRole);
         userRepository.save(userToModify);
     }
+
+    public User cambiarRolAUsuario(User user) {
+        user.setRole(Role.ROLE_USER);
+        return userRepository.save(user);
+    }
 }

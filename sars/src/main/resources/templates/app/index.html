@@ -71,5 +71,47 @@
         </div>
     </div>
 
+    <div class="row mt-5" sec:authorize="hasRole('ROLE_LIDER')">
+        <div class="col-md-10 offset-md-1">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    Zona de Peligro
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Eliminar Grupo</h5>
+                    <p class="card-text">Esta acción es irreversible. Se eliminarán todas las series y capítulos asociados al grupo, y todos los usuarios serán desvinculados.</p>
+                    <button type="button" class="btn btn-danger" onclick="confirmarEliminacionGrupo()">Eliminar este grupo</button>
+                    <form th:action="@{/grupo/eliminar}" method="post" id="deleteGroupForm" style="display: none;">
+                        <input type="hidden" name="nombreGrupo" th:value="${grupo.nombre}" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+    function confirmarEliminacionGrupo() {
+        const nombreGrupo = /*[[${grupo.nombre}]]*/ 'nombreDelGrupo';
+        const confirm1 = prompt("Estás a punto de eliminar el grupo '" + nombreGrupo + "'. Esta acción no se puede deshacer. Escribe 'ELIMINAR' para continuar.");
+        if (confirm1 === 'ELIMINAR') {
+            const confirm2 = prompt("Todos los datos asociados al grupo, incluyendo series y tareas, se perderán permanentemente. Escribe 'ELIMINAR' de nuevo para confirmar.");
+            if (confirm2 === 'ELIMINAR') {
+                const confirm3 = prompt("Esta es tu última oportunidad. ¿Estás absolutamente seguro? Escribe 'ELIMINAR' por última vez.");
+                if (confirm3 === 'ELIMINAR') {
+                    document.getElementById('deleteGroupForm').submit();
+                } else {
+                    alert('La eliminación del grupo ha sido cancelada.');
+                }
+            } else {
+                alert('La eliminación del grupo ha sido cancelada.');
+            }
+        } else {
+            alert('La eliminación del grupo ha sido cancelada.');
+        }
+    }
+    /*]]>*/
+    </script>
+
 </th:block>
 </html>
