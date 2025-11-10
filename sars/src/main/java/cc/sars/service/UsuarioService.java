@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.HashSet; // Importar HashSet
 
 @Service
 @Transactional
@@ -19,11 +20,15 @@ public class UsuarioService {
     private final UserRepository userRepository;
     private final GrupoRepository grupoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final GrupoService grupoService; // Inyectar GrupoService
+    private final SerieService serieService; // Inyectar SerieService
 
-    public UsuarioService(UserRepository userRepository, GrupoRepository grupoRepository, PasswordEncoder passwordEncoder) {
+    public UsuarioService(UserRepository userRepository, GrupoRepository grupoRepository, PasswordEncoder passwordEncoder, GrupoService grupoService, SerieService serieService) {
         this.userRepository = userRepository;
         this.grupoRepository = grupoRepository;
         this.passwordEncoder = passwordEncoder;
+        this.grupoService = grupoService;
+        this.serieService = serieService;
     }
 
     /**
@@ -127,5 +132,26 @@ public class UsuarioService {
                 Role.ROLE_ADMIN
         );
         return userRepository.save(nuevoUsuario);
+    }
+
+    /**
+     * Elimina un usuario por su nombre de usuario.
+     * Asegura que el usuario es eliminado de todos los grupos a los que pertenece
+     * y que las tareas asignadas a este usuario son desasignadas.
+     */
+    public void eliminarUsuario(String username) {
+        User userToDelete = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + username));
+
+        // Eliminar el usuario de todos los grupos a los que pertenece
+        // Se crea una copia para evitar ConcurrentModificationException
+        for (Grupo grupo : new HashSet<>(userToDelete.getGrupos())) { // Usar una copia del Set
+            grupoService.eliminarUsuarioDeGrupo(grupo.getNombre(), username);
+        }
+
+        // Desasignar tareas de este usuario
+        serieService.desasignarUsuarioDeTareas(username);
+
+        userRepository.deleteById(username);
     }
 }

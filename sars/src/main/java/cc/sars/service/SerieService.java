@@ -172,6 +172,27 @@ public class SerieService {
         serieRepository.save(serie);
     }
 
+    /**
+     * Desasigna a un usuario de todas las tareas que tiene asignadas.
+     */
+    public void desasignarUsuarioDeTareas(String username) {
+        List<Capitulo> allCapitulos = capituloRepository.findAll();
+
+        for (Capitulo capitulo : allCapitulos) {
+            boolean capituloModificado = false;
+            for (Tarea tarea : capitulo.getTareas()) {
+                if (username.equals(tarea.getUsuarioAsignado()) && tarea.getEstadoTarea() == EstadosTareas.Asignado) {
+                    tarea.setUsuarioAsignado("NADIE");
+                    tarea.setEstadoTarea(EstadosTareas.NoAsignado);
+                    capituloModificado = true;
+                }
+            }
+            if (capituloModificado) {
+                capituloRepository.save(capitulo);
+            }
+        }
+    }
+
     // --- MÉTODOS PARA TAREAS ---
 
     /**

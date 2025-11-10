@@ -28,4 +28,20 @@
             </li>
         </ul>
     </div>
+
+    <h3 class="mt-5">Gestionar Usuarios</h3>
+    <div th:if="${usuarios.isEmpty()}" class="alert alert-info">
+        No hay usuarios registrados en el sistema.
+    </div>
+    <div th:unless="${usuarios.isEmpty()}">
+        <ul class="list-group mb-4">
+            <li th:each="usuario : ${usuarios}" class="list-group-item d-flex justify-content-between align-items-center">
+                <span th:text="${usuario.username}">Nombre de Usuario</span>
+                <form th:action="@{/admin/usuario/eliminar}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar a este usuario? Esta acción es irreversible.');">
+                    <input type="hidden" name="username" th:value="${usuario.username}" />
+                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                </form>
+            </li>
+        </ul>
+    </div>
 </th:block>

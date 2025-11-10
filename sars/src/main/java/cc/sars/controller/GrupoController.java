@@ -53,9 +53,10 @@ public class GrupoController {
         List<User> todosLosUsuarios = usuarioService.getTodosLosUsuarios();
 
         // 4. Filtrar para el desplegable:
-        //    (Queremos solo usuarios que NO estén ya en este grupo)
+        //    (Queremos solo usuarios que NO estén ya en este grupo Y que NO sean ADMIN)
         List<User> usuariosDisponibles = todosLosUsuarios.stream()
                 .filter(u -> !usuariosEnGrupo.contains(u))
+                .filter(u -> u.getRole() != Role.ROLE_ADMIN) // Excluir usuarios ADMIN
                 .collect(Collectors.toList());
 
         model.addAttribute("grupo", miGrupo);

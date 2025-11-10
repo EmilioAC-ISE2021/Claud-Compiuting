@@ -41,6 +41,11 @@ public class GrupoService {
         User usuario = userRepository.findByUsername(nombreUsuario)
                 .orElseThrow(() -> new RuntimeException("No se encontró el usuario: " + nombreUsuario));
 
+        // Verificar si el usuario es ADMIN
+        if (usuario.getRole() == Role.ROLE_ADMIN) {
+            throw new RuntimeException("Error: Los usuarios con rol ADMIN no pueden ser añadidos a grupos.");
+        }
+
         grupo.agregarUsuario(usuario); // Añade el usuario a la colección del grupo
         usuario.addGrupo(grupo);       // Añade el grupo a la colección del usuario (y también añade el usuario a la colección del grupo de nuevo)
 
