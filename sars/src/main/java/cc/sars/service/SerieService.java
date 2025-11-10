@@ -1,5 +1,6 @@
 package cc.sars.service;
 
+import cc.sars.exception.SerieNotFoundException;
 import cc.sars.model.Capitulo;
 import cc.sars.model.EstadosTareas;
 import cc.sars.model.Grupo;
@@ -41,7 +42,7 @@ public class SerieService {
     @Transactional(readOnly = true)
     public List<Serie> getSeriesPorGrupo(String nombreGrupo) {
         Grupo grupo = grupoRepository.findByNombre(nombreGrupo)
-                .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
+                .orElseThrow(() -> new SerieNotFoundException("Grupo no encontrado"));
         return grupo.getSeries();
     }
 
@@ -54,6 +55,14 @@ public class SerieService {
     }
 
     /**
+     * Obtiene todas las series.
+     */
+    @Transactional(readOnly = true)
+    public List<Serie> buscarTodas() {
+        return serieRepository.findAll();
+    }
+
+    /**
      * Crea una nueva serie y la asigna a un grupo.
      */
     public Serie createSerie(String nombre, String descripcion, String nombreGrupo) {
@@ -62,7 +71,7 @@ public class SerieService {
         }
         
         Grupo grupo = grupoRepository.findByNombre(nombreGrupo)
-                 .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
+                 .orElseThrow(() -> new SerieNotFoundException("Grupo no encontrado"));
 
         Serie nuevaSerie = new Serie(nombre, descripcion);
         
@@ -74,7 +83,7 @@ public class SerieService {
 
     public void deleteSerie(String nombreSerie) {
         Serie serie = getSerieByNombre(nombreSerie)
-                .orElseThrow(() -> new RuntimeException("No se encontró la serie: " + nombreSerie));
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie));
         serieRepository.delete(serie);
     }
 
@@ -93,7 +102,7 @@ public class SerieService {
      */
     public Serie addCapituloToSerie(String nombreSerie, String nombreCapitulo) {
         Serie serie = getSerieByNombre(nombreSerie)
-                .orElseThrow(() -> new RuntimeException("No se encontró la serie: " + nombreSerie));
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie));
 
         if (capituloRepository.findByNombre(nombreCapitulo).isPresent()) {
              throw new RuntimeException("Error: El capítulo con el nombre '" + nombreCapitulo + "' ya existe.");
@@ -117,7 +126,7 @@ public class SerieService {
      */
     public Serie addCapitulosToSerie(String nombreSerie, String nombresCapitulos, String[] tareasEnMasa) {
         Serie serie = getSerieByNombre(nombreSerie)
-                .orElseThrow(() -> new RuntimeException("No se encontró la serie: " + nombreSerie));
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie));
 
         // Dividir la cadena de nombres de capítulos por saltos de línea y procesar cada uno
         Arrays.stream(nombresCapitulos.split("\\r?\\n"))
@@ -160,7 +169,7 @@ public class SerieService {
 
     public void deleteCapitulo(String nombreSerie, String nombreCapitulo) {
         Serie serie = getSerieByNombre(nombreSerie)
-                .orElseThrow(() -> new RuntimeException("No se encontró la serie: " + nombreSerie));
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie));
 
         Capitulo capitulo = serie.getCapitulos().stream()
                 .filter(c -> c.getNombre().equals(nombreCapitulo))
@@ -319,7 +328,7 @@ public class SerieService {
 
         // 4. Verificar que el nuevo usuario asignado existe
         User nuevoUsuario = userRepository.findByUsername(nuevoUsuarioAsignadoUsername)
-                .orElseThrow(() -> new RuntimeException("No se encontró el usuario a asignar: " + nuevoUsuarioAsignadoUsername));
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró el usuario a asignar: " + nuevoUsuarioAsignadoUsername));
 
         // 5. Actualizar el usuario asignado
         tareaAActualizar.setUsuarioAsignado(nuevoUsuario.getUsername());
