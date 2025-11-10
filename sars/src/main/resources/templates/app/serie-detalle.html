@@ -143,8 +143,13 @@
                           isUser=${usuarioActual.role.name() == 'ROLE_USER'},
                           isQC=${usuarioActual.role.name() == 'ROLE_QC'}"
                  th:classappend="${ccCompleted ? 'border-success border-5' : ''}">        
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0" th:text="${capitulo.nombre}">Nombre del Capítulo</h5>
+            <form th:action="@{/serie/{nombreSerie}/capitulo/{nombreCapitulo}/eliminar(nombreSerie=${serie.nombre}, nombreCapitulo=${capitulo.nombre})}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este capítulo?');" sec:authorize="hasRole('ROLE_LIDER')">
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </form>
         </div>
         
         <div class="card-body">
@@ -325,10 +330,18 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
     document.addEventListener('DOMContentLoaded', function() {
-        // Guardar la posición del scroll antes de recargar
+        // Guardar la posición del scroll antes de recargar al cambiar estado de tarea
         const selects = document.querySelectorAll('select[onchange="this.form.submit()"]');
         selects.forEach(select => {
             select.addEventListener('change', function() {
+                sessionStorage.setItem('scrollPosition', window.scrollY);
+            });
+        });
+
+        // Guardar la posición del scroll antes de recargar al eliminar un capítulo
+        const deleteChapterForms = document.querySelectorAll('form[action*="/eliminar"]');
+        deleteChapterForms.forEach(form => {
+            form.addEventListener('submit', function() {
                 sessionStorage.setItem('scrollPosition', window.scrollY);
             });
         });

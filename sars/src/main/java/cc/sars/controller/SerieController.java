@@ -120,4 +120,25 @@ public class SerieController {
         }
         return "redirect:/serie/" + nombreSerie;
     }
+
+    @PostMapping("/serie/{nombreSerie}/capitulo/{nombreCapitulo}/eliminar")
+    public String deleteCapitulo(@PathVariable String nombreSerie,
+                                 @PathVariable String nombreCapitulo) {
+        try {
+            serieService.deleteCapitulo(nombreSerie, nombreCapitulo);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return "redirect:/serie/" + nombreSerie;
+    }
+
+    @PostMapping("/serie/{nombreSerie}/eliminar")
+    public String deleteSerie(@PathVariable String nombreSerie) {
+        try {
+            serieService.deleteSerie(nombreSerie);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return "redirect:/";
+    }
 }

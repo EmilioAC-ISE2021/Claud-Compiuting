@@ -72,6 +72,12 @@ public class SerieService {
         return nuevaSerie;
     }
 
+    public void deleteSerie(String nombreSerie) {
+        Serie serie = getSerieByNombre(nombreSerie)
+                .orElseThrow(() -> new RuntimeException("No se encontró la serie: " + nombreSerie));
+        serieRepository.delete(serie);
+    }
+
     // --- MÉTODOS PARA CAPÍTULOS ---
 
     /**
@@ -150,6 +156,20 @@ public class SerieService {
               });
 
         return serieRepository.save(serie);
+    }
+
+    public void deleteCapitulo(String nombreSerie, String nombreCapitulo) {
+        Serie serie = getSerieByNombre(nombreSerie)
+                .orElseThrow(() -> new RuntimeException("No se encontró la serie: " + nombreSerie));
+
+        Capitulo capitulo = serie.getCapitulos().stream()
+                .filter(c -> c.getNombre().equals(nombreCapitulo))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
+
+        serie.removeCapitulo(capitulo);
+        capituloRepository.delete(capitulo);
+        serieRepository.save(serie);
     }
 
     // --- MÉTODOS PARA TAREAS ---

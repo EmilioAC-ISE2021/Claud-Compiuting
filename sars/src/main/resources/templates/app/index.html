@@ -47,7 +47,7 @@
                 Este grupo aún no tiene series. ¡Crea una!
             </div>
 
-            <table class"table table-hover" th:if="${!series.isEmpty()}">
+            <table class="table table-hover" th:if="${!series.isEmpty()}">
                 <thead>
                     <tr>
                         <th>Nombre de la Serie</th>
@@ -56,7 +56,14 @@
                 <tbody>
                     <tr th:each="serie : ${series}">
                         <td>
-                            <a th:href="@{/serie/{nombreSerie}(nombreSerie=${serie.nombre})}" th:text="${serie.nombre}">Nombre de Serie</a>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a th:href="@{/serie/{nombreSerie}(nombreSerie=${serie.nombre})}" th:text="${serie.nombre}">Nombre de Serie</a>
+                                <form th:action="@{/serie/{nombreSerie}/eliminar(nombreSerie=${serie.nombre})}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta serie?');" sec:authorize="hasRole('ROLE_LIDER')">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
