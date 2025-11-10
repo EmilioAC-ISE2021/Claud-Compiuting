@@ -22,9 +22,11 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import cc.sars.controller.api.dto.SerieCreateDTO;
+import cc.sars.controller.api.dto.SerieUpdateDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Optional;
@@ -101,5 +103,22 @@ public class SerieRestControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nombreSerie", is("New Serie")))
                 .andExpect(jsonPath("$.descripcion", is("New Description")));
+    }
+
+    @Test
+    void updateSerie_shouldUpdateSerie() throws Exception {
+        // Given
+        SerieUpdateDTO serieUpdateDTO = new SerieUpdateDTO("Updated Description");
+        Serie updatedSerie = new Serie("Serie A", "Updated Description");
+
+        when(serieService.updateSerie("Serie A", "Updated Description")).thenReturn(updatedSerie);
+
+        // When & Then
+        mockMvc.perform(put("/api/series/Serie A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(serieUpdateDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombreSerie", is("Serie A")))
+                .andExpect(jsonPath("$.descripcion", is("Updated Description")));
     }
 }

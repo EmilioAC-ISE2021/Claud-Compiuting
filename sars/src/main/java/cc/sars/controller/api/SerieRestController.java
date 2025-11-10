@@ -2,6 +2,7 @@ package cc.sars.controller.api;
 
 import cc.sars.controller.api.dto.SerieCreateDTO;
 import cc.sars.controller.api.dto.SerieDTO;
+import cc.sars.controller.api.dto.SerieUpdateDTO;
 import cc.sars.model.Serie;
 import cc.sars.service.SerieService;
 import org.slf4j.Logger;
@@ -49,5 +50,12 @@ public class SerieRestController {
         log.info("Request to create serie: {}", serieCreateDTO.getNombre());
         Serie nuevaSerie = serieService.createSerie(serieCreateDTO.getNombre(), serieCreateDTO.getDescripcion(), serieCreateDTO.getNombreGrupo());
         return new SerieDTO(nuevaSerie.getNombre(), nuevaSerie.getDescripcion());
+    }
+
+    @PutMapping("/{nombre}")
+    public SerieDTO updateSerie(@PathVariable String nombre, @RequestBody SerieUpdateDTO serieUpdateDTO) {
+        log.info("Request to update serie: {}", nombre);
+        Serie serieActualizada = serieService.updateSerie(nombre, serieUpdateDTO.getDescripcion());
+        return new SerieDTO(serieActualizada.getNombre(), serieActualizada.getDescripcion());
     }
 }

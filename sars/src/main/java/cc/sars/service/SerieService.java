@@ -87,6 +87,13 @@ public class SerieService {
         serieRepository.delete(serie);
     }
 
+    public Serie updateSerie(String nombre, String descripcion) {
+        Serie serie = getSerieByNombre(nombre)
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombre));
+        serie.setDescripcion(descripcion);
+        return serieRepository.save(serie);
+    }
+
     // --- MÉTODOS PARA CAPÍTULOS ---
 
     /**
