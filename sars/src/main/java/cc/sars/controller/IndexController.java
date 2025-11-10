@@ -33,6 +33,10 @@ public class IndexController {
     @GetMapping("/")
     public String getIndexPage(@AuthenticationPrincipal User user, Model model) {
 
+        if (user.getRole() == Role.ROLE_ADMIN) {
+            return "redirect:/admin";
+        }
+
         Set<Grupo> gruposDelUsuario = user.getGrupos();
 
         // Caso 1: No tiene grupo

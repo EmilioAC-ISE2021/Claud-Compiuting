@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(content=~{::content}, titulo='Administración')}">
+
+<th:block th:fragment="content">
+    <h2 class="mb-4">Panel de Administración</h2>
+
+    <!-- Mensajes de éxito/error -->
+    <div th:if="${success_message}" class="alert alert-success" role="alert">
+        <p th:text="${success_message}"></p>
+    </div>
+    <div th:if="${error_message}" class="alert alert-danger" role="alert">
+        <p th:text="${error_message}"></p>
+    </div>
+
+    <h3>Gestionar Grupos</h3>
+    <div th:if="${grupos.isEmpty()}" class="alert alert-info">
+        No hay grupos registrados en el sistema.
+    </div>
+    <div th:unless="${grupos.isEmpty()}">
+        <ul class="list-group mb-4">
+            <li th:each="grupo : ${grupos}" class="list-group-item d-flex justify-content-between align-items-center">
+                <span th:text="${grupo.nombre}">Nombre del Grupo</span>
+                <form th:action="@{/admin/grupo/eliminar}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este grupo? Esta acción es irreversible y eliminará todas las series y capítulos asociados.');">
+                    <input type="hidden" name="nombreGrupo" th:value="${grupo.nombre}" />
+                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</th:block>

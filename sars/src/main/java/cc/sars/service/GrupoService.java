@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 
 @Service
 @Transactional
@@ -46,6 +47,11 @@ public class GrupoService {
         // Guarda ambas entidades para asegurar que los cambios persistan
         grupoRepository.saveAndFlush(grupo); // Forzar el guardado para Grupo
         userRepository.saveAndFlush(usuario); // Forzar el guardado para Usuario
+    }
+
+    @Transactional(readOnly = true)
+    public List<Grupo> getAllGrupos() {
+        return grupoRepository.findAll();
     }
 
     /**

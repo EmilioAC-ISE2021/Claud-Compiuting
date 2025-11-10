@@ -116,4 +116,16 @@ public class UsuarioService {
         user.setRole(Role.ROLE_USER);
         return userRepository.save(user);
     }
+
+    public User createAdminUser(String nombreUsuario, String contrasenya) {
+        if (userRepository.findByUsername(nombreUsuario).isPresent()) {
+            throw new RuntimeException("Error: El nombre de usuario '" + nombreUsuario + "' ya existe.");
+        }
+        User nuevoUsuario = new User(
+                nombreUsuario,
+                passwordEncoder.encode(contrasenya),
+                Role.ROLE_ADMIN
+        );
+        return userRepository.save(nuevoUsuario);
+    }
 }
