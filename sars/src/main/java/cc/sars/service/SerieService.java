@@ -136,7 +136,7 @@ public class SerieService {
                 .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie));
 
         // Dividir la cadena de nombres de capítulos por saltos de línea y procesar cada uno
-        Arrays.stream(nombresCapitulos.split("\\r?\\n"))
+        Arrays.stream(nombresCapitulos.split("\r?\n"))
               .map(String::trim)
               .filter(nombre -> !nombre.isEmpty())
               .forEach(nombreCapitulo -> {
@@ -212,6 +212,19 @@ public class SerieService {
     // --- MÉTODOS PARA TAREAS ---
 
     /**
+     * Busca una tarea específica por su nombre dentro de un capítulo.
+     */
+    @Transactional(readOnly = true)
+    public Optional<Tarea> getTareaByNombre(String nombreCapitulo, String nombreTarea) {
+        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró el capítulo: " + nombreCapitulo));
+
+        return capitulo.getTareas().stream()
+                .filter(tarea -> tarea.getNombre().equals(nombreTarea))
+                .findFirst();
+    }
+
+    /**
      * Crea una nueva tarea y la añade a un capítulo existente.
      */
     public Capitulo addTareaToCapitulo(String nombreCapitulo, String nombreTarea) {
@@ -225,6 +238,38 @@ public class SerieService {
         capitulo.anyadirTarea(nuevaTarea);
 
         return capituloRepository.save(capitulo);
+    }
+
+    /**
+     * Elimina una tarea de un capítulo.
+     */
+    public void deleteTarea(String nombreCapitulo, String nombreTarea) {
+        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró el capítulo: " + nombreCapitulo));
+
+        Tarea tareaAEliminar = capitulo.getTareas().stream()
+                .filter(tarea -> tarea.getNombre().equals(nombreTarea))
+                .findFirst()
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la tarea: " + nombreTarea + " en el capítulo: " + nombreCapitulo));
+
+        capitulo.quitarTarea(tareaAEliminar);
+        capituloRepository.save(capitulo);
+    }
+
+    // TODO: Implementar lógica de autorización
+    public Tarea updateTarea(String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado, String nuevoUsuarioAsignado) {
+        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró el capítulo: " + nombreCapitulo));
+
+        Tarea tareaAActualizar = capitulo.getTareas().stream()
+                .filter(tarea -> tarea.getNombre().equals(nombreTarea))
+                .findFirst()
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la tarea: " + nombreTarea));
+
+        tareaAActualizar.setEstadoTarea(nuevoEstado);
+        tareaAActualizar.setUsuarioAsignado(nuevoUsuarioAsignado);
+        capituloRepository.save(capitulo);
+        return tareaAActualizar;
     }
 
     /**

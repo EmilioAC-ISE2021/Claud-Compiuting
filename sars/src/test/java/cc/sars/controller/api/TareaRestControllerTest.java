@@ -19,6 +19,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Arrays;
 import java.util.Optional;
 
+import cc.sars.controller.api.dto.TareaCreateDTO;
+import cc.sars.controller.api.dto.TareaUpdateDTO;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import org.springframework.http.MediaType;
+
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
@@ -78,5 +85,71 @@ public class TareaRestControllerTest {
         // When & Then
         mockMvc.perform(get("/api/series/Serie A/capitulos/NonExistentChapter/tareas"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void addTareaToCapitulo_shouldCreateTarea() throws Exception {
+        // Given
+        TareaCreateDTO tareaCreateDTO = new TareaCreateDTO("New Task");
+        Capitulo capitulo = new Capitulo("Chapter 1");
+        Tarea newTarea = new Tarea("New Task");
+        Capitulo updatedCapitulo = new Capitulo("Chapter 1");
+        updatedCapitulo.anyadirTarea(newTarea);
+
+        when(serieService.addTareaToCapitulo("Chapter 1", "New Task")).thenReturn(updatedCapitulo);
+
+        // When & Then
+        mockMvc.perform(post("/api/series/Serie A/capitulos/Chapter 1/tareas")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tareaCreateDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nombre", is("New Task")));
+    }
+
+    @Test
+    void updateTarea_shouldUpdateTarea() throws Exception {
+        // Given
+        TareaUpdateDTO tareaUpdateDTO = new TareaUpdateDTO(EstadosTareas.Completado, "user2");
+        Tarea updatedTarea = new Tarea("Task 1");
+        updatedTarea.setEstadoTarea(EstadosTareas.Completado);
+        updatedTarea.setUsuarioAsignado("user2");
+
+        when(serieService.updateTarea("Chapter 1", "Task 1", EstadosTareas.Completado, "user2")).thenReturn(updatedTarea);
+
+        // When & Then
+        mockMvc.perform(put("/api/series/Serie A/capitulos/Chapter 1/tareas/Task 1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tareaUpdateDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre", is("Task 1")))
+                .andExpect(jsonPath("$.estado", is("Completado")))
+                .andExpect(jsonPath("$.usuarioAsignado", is("user2")));
+    }
+
+    @Test
+    void getTareaByNombre_shouldReturnTarea() throws Exception {
+        // Given
+        Tarea tarea = new Tarea("Task 1");
+        tarea.setEstadoTarea(EstadosTareas.NoAsignado);
+        tarea.setUsuarioAsignado("NADIE");
+
+        when(serieService.getTareaByNombre("Chapter 1", "Task 1")).thenReturn(Optional.of(tarea));
+
+        // When & Then
+        mockMvc.perform(get("/api/series/Serie A/capitulos/Chapter 1/tareas/Task 1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre", is("Task 1")))
+                .andExpect(jsonPath("$.estado", is("NoAsignado")))
+                .andExpect(jsonPath("$.usuarioAsignado", is("NADIE")));
+    }
+
+    @Test
+    void deleteTarea_shouldDeleteTarea() throws Exception {
+        // Given
+        // No specific setup needed for service method that returns void
+
+        // When & Then
+        mockMvc.perform(delete("/api/series/Serie A/capitulos/Chapter 1/tareas/Task 1"))
+                .andExpect(status().isNoContent());
     }
 }

@@ -35,8 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Optional;
 
 @WebMvcTest(controllers = SerieRestController.class,
-        excludeAutoConfiguration = SecurityAutoConfiguration.class,
-        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
+        excludeAutoConfiguration = SecurityAutoConfiguration.class)
 @AutoConfigureMockMvc(addFilters = false) // Deshabilita los filtros de seguridad para este test
 public class SerieRestControllerTest {
 
