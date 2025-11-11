@@ -27,18 +27,18 @@ public class SerieRestController {
 
     @GetMapping
     public List<SerieDTO> getAllSeries() {
-        log.info("Request to get all series");
+        log.info("Solicitud para obtener todas las series");
         List<Serie> series = serieService.buscarTodas();
         List<SerieDTO> seriesDTO = series.stream()
                 .map(serie -> new SerieDTO(serie.getNombre(), serie.getDescripcion()))
                 .collect(Collectors.toList());
-        log.info("Found {} series", seriesDTO.size());
+        log.info("Se encontraron {} series", seriesDTO.size());
         return seriesDTO;
     }
 
     @GetMapping("/{nombre}")
     public SerieDTO getSerieByNombre(@PathVariable String nombre) {
-        log.info("Request to get serie by nombre: {}", nombre);
+        log.info("Solicitud para obtener serie por nombre: {}", nombre);
         Serie serie = serieService.getSerieByNombre(nombre)
                 .orElseThrow(() -> new cc.sars.exception.SerieNotFoundException("Serie no encontrada con el nombre: " + nombre));
         return new SerieDTO(serie.getNombre(), serie.getDescripcion());
@@ -47,14 +47,14 @@ public class SerieRestController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public SerieDTO createSerie(@RequestBody SerieCreateDTO serieCreateDTO) {
-        log.info("Request to create serie: {}", serieCreateDTO.getNombre());
+        log.info("Solicitud para crear serie: {}", serieCreateDTO.getNombre());
         Serie nuevaSerie = serieService.createSerie(serieCreateDTO.getNombre(), serieCreateDTO.getDescripcion(), serieCreateDTO.getNombreGrupo());
         return new SerieDTO(nuevaSerie.getNombre(), nuevaSerie.getDescripcion());
     }
 
     @PutMapping("/{nombre}")
     public SerieDTO updateSerie(@PathVariable String nombre, @RequestBody SerieUpdateDTO serieUpdateDTO) {
-        log.info("Request to update serie: {}", nombre);
+        log.info("Solicitud para actualizar serie: {}", nombre);
         Serie serieActualizada = serieService.updateSerie(nombre, serieUpdateDTO.getDescripcion());
         return new SerieDTO(serieActualizada.getNombre(), serieActualizada.getDescripcion());
     }
@@ -62,7 +62,7 @@ public class SerieRestController {
     @DeleteMapping("/{nombre}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteSerie(@PathVariable String nombre) {
-        log.info("Request to delete serie: {}", nombre);
+        log.info("Solicitud para eliminar serie: {}", nombre);
         serieService.deleteSerie(nombre);
     }
 }

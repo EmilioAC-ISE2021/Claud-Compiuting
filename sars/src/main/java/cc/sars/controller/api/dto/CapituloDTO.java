@@ -1,24 +1,28 @@
 package cc.sars.controller.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
 public class CapituloDTO {
+    private String nombreCapitulo;
+    private String nombreSerie; // Add serie name for context
+    private List<TareaResponseDTO> tareas;
 
-    @JsonProperty("nombreCapitulo")
-    private String nombre;
-
-    public CapituloDTO() {
+    public CapituloDTO(String nombreCapitulo, String nombreSerie, List<TareaResponseDTO> tareas) {
+        this.nombreCapitulo = nombreCapitulo;
+        this.nombreSerie = nombreSerie;
+        this.tareas = tareas;
     }
 
-    public CapituloDTO(String nombre) {
-        this.nombre = nombre;
+    // Getters
+    public String getNombreCapitulo() {
+        return nombreCapitulo;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getNombreSerie() {
+        return nombreSerie;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public List<TareaResponseDTO> getTareas() {
+        return tareas;
     }
 }
