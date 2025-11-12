@@ -8,3 +8,5 @@ sars/.gemini/
 sars/.bashrc
 sars/.inputrc
 sars/.Xauthority
+sars/testdb.mv.db
+sars/testdb.trace.db
