@@ -94,6 +94,43 @@ public class SerieService {
         return serieRepository.save(serie);
     }
 
+    /**
+     * Busca una serie específica por su nombre (ID) dentro de un grupo.
+     */
+    @Transactional(readOnly = true)
+    public Optional<Serie> getSerieByNombreAndGrupo(String nombreGrupo, String nombreSerie) {
+        Grupo grupo = grupoRepository.findByNombre(nombreGrupo)
+                .orElseThrow(() -> new SerieNotFoundException("Grupo no encontrado: " + nombreGrupo));
+        return grupo.getSeries().stream()
+                .filter(serie -> serie.getNombre().equals(nombreSerie))
+                .findFirst();
+    }
+
+    public void deleteSerieInGrupo(String nombreGrupo, String nombreSerie) {
+        Grupo grupo = grupoRepository.findByNombre(nombreGrupo)
+                .orElseThrow(() -> new SerieNotFoundException("Grupo no encontrado: " + nombreGrupo));
+        Serie serie = grupo.getSeries().stream()
+                .filter(s -> s.getNombre().equals(nombreSerie))
+                .findFirst()
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie + " en el grupo: " + nombreGrupo));
+        
+        grupo.getSeries().remove(serie);
+        serieRepository.delete(serie);
+        grupoRepository.save(grupo);
+    }
+
+    public Serie updateSerieInGrupo(String nombreGrupo, String nombreSerie, String descripcion) {
+        Grupo grupo = grupoRepository.findByNombre(nombreGrupo)
+                .orElseThrow(() -> new SerieNotFoundException("Grupo no encontrado: " + nombreGrupo));
+        Serie serie = grupo.getSeries().stream()
+                .filter(s -> s.getNombre().equals(nombreSerie))
+                .findFirst()
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie + " en el grupo: " + nombreGrupo));
+        
+        serie.setDescripcion(descripcion);
+        return serieRepository.save(serie);
+    }
+
     // --- MÉTODOS PARA CAPÍTULOS ---
 
     /**
@@ -187,6 +224,93 @@ public class SerieService {
         capituloRepository.delete(capitulo);
         serieRepository.save(serie);
     }
+
+    /**
+     * Crea un nuevo capítulo y lo añade a una serie existente, validando el grupo.
+     */
+    public Serie addCapituloToSerie(String nombreGrupo, String nombreSerie, String nombreCapitulo) {
+        Serie serie = getSerieByNombreAndGrupo(nombreGrupo, nombreSerie)
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie + " en el grupo: " + nombreGrupo));
+
+        if (capituloRepository.findByNombre(nombreCapitulo).isPresent()) {
+             throw new RuntimeException("Error: El capítulo con el nombre '" + nombreCapitulo + "' ya existe.");
+        }
+
+        Capitulo nuevoCapitulo = new Capitulo(nombreCapitulo);
+        
+        // Añadir la tarea 'CC' por defecto
+        Tarea tareaCC = new Tarea("CC");
+        nuevoCapitulo.anyadirTarea(tareaCC);
+        
+        // Llamada al método 'addCapitulo' de la entidad Serie
+        serie.addCapitulo(nuevoCapitulo);
+
+        return serieRepository.save(serie);
+    }
+
+    /**
+     * Crea múltiples capítulos y los añade a una serie existente, validando el grupo.
+     */
+    public Serie addCapitulosToSerie(String nombreGrupo, String nombreSerie, String nombresCapitulos, String[] tareasEnMasa) {
+        Serie serie = getSerieByNombreAndGrupo(nombreGrupo, nombreSerie)
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie + " en el grupo: " + nombreGrupo));
+
+        // Dividir la cadena de nombres de capítulos por saltos de línea y procesar cada uno
+        Arrays.stream(nombresCapitulos.split("\r?\n"))
+              .map(String::trim)
+              .filter(nombre -> !nombre.isEmpty())
+              .forEach(nombreCapitulo -> {
+                  if (capituloRepository.findByNombre(nombreCapitulo).isPresent()) {
+                      System.err.println("Advertencia: El capítulo con el nombre '" + nombreCapitulo + "' ya existe y será omitido.");
+                      return; // Saltar este capítulo y continuar con el siguiente
+                  }
+
+                  Capitulo nuevoCapitulo = new Capitulo(nombreCapitulo);
+
+                  // Añadir las tareas en masa si existen
+                  if (tareasEnMasa != null) {
+                      Arrays.stream(tareasEnMasa)
+                            .map(String::trim)
+                            .filter(tareaData -> !tareaData.isEmpty())
+                            .forEach(tareaData -> {
+                                String[] parts = tareaData.split("###");
+                                if (parts.length == 3) {
+                                    String nombreTarea = parts[0];
+                                    EstadosTareas estadoTarea = EstadosTareas.valueOf(parts[1]);
+                                    String usuarioAsignado = parts[2];
+
+                                    Tarea nuevaTarea = new Tarea(nombreTarea);
+                                    nuevaTarea.setEstadoTarea(estadoTarea);
+                                    nuevaTarea.setUsuarioAsignado(usuarioAsignado);
+                                    nuevoCapitulo.anyadirTarea(nuevaTarea);
+                                } else {
+                                    System.err.println("Advertencia: Formato de tarea en masa incorrecto: " + tareaData);
+                                }
+                            });
+                  }
+                  serie.addCapitulo(nuevoCapitulo);
+              });
+
+        return serieRepository.save(serie);
+    }
+
+    /**
+     * Elimina un capítulo de una serie, validando el grupo.
+     */
+    public void deleteCapitulo(String nombreGrupo, String nombreSerie, String nombreCapitulo) {
+        Serie serie = getSerieByNombreAndGrupo(nombreGrupo, nombreSerie)
+                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie + " en el grupo: " + nombreGrupo));
+
+        Capitulo capitulo = serie.getCapitulos().stream()
+                .filter(c -> c.getNombre().equals(nombreCapitulo))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
+
+        serie.removeCapitulo(capitulo);
+        capituloRepository.delete(capitulo);
+        serieRepository.save(serie);
+    }
+
 
     /**
      * Desasigna a un usuario de todas las tareas que tiene asignadas.

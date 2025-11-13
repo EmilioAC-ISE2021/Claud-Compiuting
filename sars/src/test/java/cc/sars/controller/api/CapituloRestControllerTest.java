@@ -47,6 +47,8 @@ public class CapituloRestControllerTest {
     @MockBean
     private SerieService serieService;
 
+    private static final String TEST_GROUP = "TestGroup";
+
     @Test
     void getCapitulosBySerie_shouldReturnListOfCapitulos() throws Exception {
         // Given
@@ -67,10 +69,10 @@ public class CapituloRestControllerTest {
         serie.addCapitulo(capitulo1);
         serie.addCapitulo(capitulo2);
 
-        when(serieService.getSerieByNombre(nombreSerie)).thenReturn(Optional.of(serie));
+        when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, nombreSerie)).thenReturn(Optional.of(serie));
 
         // When & Then
-        mockMvc.perform(get("/api/series/{nombreSerie}/capitulos", nombreSerie))
+        mockMvc.perform(get("/api/grupos/{nombreGrupo}/series/{nombreSerie}/capitulos", TEST_GROUP, nombreSerie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].nombreCapitulo", is("Capitulo1")))
@@ -98,10 +100,10 @@ public class CapituloRestControllerTest {
         capitulo.setSerie(serie);
         serie.addCapitulo(capitulo);
 
-        when(serieService.getSerieByNombre(nombreSerie)).thenReturn(Optional.of(serie));
+        when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, nombreSerie)).thenReturn(Optional.of(serie));
 
         // When & Then
-        mockMvc.perform(get("/api/series/{nombreSerie}/capitulos/{nombreCapitulo}", nombreSerie, nombreCapitulo))
+        mockMvc.perform(get("/api/grupos/{nombreGrupo}/series/{nombreSerie}/capitulos/{nombreCapitulo}", TEST_GROUP, nombreSerie, nombreCapitulo))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombreCapitulo", is(nombreCapitulo)))
                 .andExpect(jsonPath("$.nombreSerie", is(nombreSerie)))
@@ -117,10 +119,10 @@ public class CapituloRestControllerTest {
         Serie serie = new Serie(nombreSerie, "Description Test");
         serie.addCapitulo(new Capitulo("ExistingCapitulo")); // Añadir uno existente para asegurar que el filtro funciona
 
-        when(serieService.getSerieByNombre(nombreSerie)).thenReturn(Optional.of(serie));
+        when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, nombreSerie)).thenReturn(Optional.of(serie));
 
         // When & Then
-        mockMvc.perform(get("/api/series/{nombreSerie}/capitulos/{nombreCapitulo}", nombreSerie, nombreCapitulo))
+        mockMvc.perform(get("/api/grupos/{nombreGrupo}/series/{nombreSerie}/capitulos/{nombreCapitulo}", TEST_GROUP, nombreSerie, nombreCapitulo))
                 .andExpect(status().isNotFound());
     }
 
@@ -135,19 +137,19 @@ public class CapituloRestControllerTest {
         Serie serie = new Serie(nombreSerie, "Description Test");
         Capitulo newCapitulo = new Capitulo(nombreCapitulo);
         newCapitulo.setSerie(serie);
+        newCapitulo.anyadirTarea(new Tarea("CC")); // Add the default task to the mock
         serie.addCapitulo(newCapitulo); // Add to the series that will be returned by the service
 
-        when(serieService.addCapituloToSerie(nombreSerie, nombreCapitulo)).thenReturn(serie);
-        when(serieService.getSerieByNombre(nombreSerie)).thenReturn(Optional.of(serie)); // For the controller to find the series
+        when(serieService.addCapituloToSerie(TEST_GROUP, nombreSerie, nombreCapitulo)).thenReturn(serie);
 
         // When & Then
-        mockMvc.perform(post("/api/series/{nombreSerie}/capitulos", nombreSerie)
+        mockMvc.perform(post("/api/grupos/{nombreGrupo}/series/{nombreSerie}/capitulos", TEST_GROUP, nombreSerie)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(capituloCreateDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nombreCapitulo", is(nombreCapitulo)))
                 .andExpect(jsonPath("$.nombreSerie", is(nombreSerie)))
-                .andExpect(jsonPath("$.tareas", hasSize(0)));
+                .andExpect(jsonPath("$.tareas", hasSize(1))); // Now it has the default 'CC' task
     }
 
     @Test
@@ -181,11 +183,10 @@ public class CapituloRestControllerTest {
                         tareaDTO.getUsuarioAsignado() != null ? tareaDTO.getUsuarioAsignado() : "NADIE"))
                 .toArray(String[]::new);
 
-        when(serieService.addCapitulosToSerie(nombreSerie, nombresCapitulos, tareasEnMasaArray)).thenReturn(serie);
-        when(serieService.getSerieByNombre(nombreSerie)).thenReturn(Optional.of(serie)); // For the controller to find the series
+        when(serieService.addCapitulosToSerie(eq(TEST_GROUP), eq(nombreSerie), eq(nombresCapitulos), any(String[].class))).thenReturn(serie);
 
         // When & Then
-        mockMvc.perform(post("/api/series/{nombreSerie}/capitulos/bulk", nombreSerie)
+        mockMvc.perform(post("/api/grupos/{nombreGrupo}/series/{nombreSerie}/capitulos/bulk", TEST_GROUP, nombreSerie)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(bulkCreateDTO)))
                 .andExpect(status().isCreated())
@@ -205,12 +206,12 @@ public class CapituloRestControllerTest {
         // Given
         String nombreSerie = "SerieTest";
         String nombreCapitulo = "CapituloToDelete";
-        doNothing().when(serieService).deleteCapitulo(nombreSerie, nombreCapitulo);
+        doNothing().when(serieService).deleteCapitulo(TEST_GROUP, nombreSerie, nombreCapitulo);
 
         // When & Then
-        mockMvc.perform(delete("/api/series/{nombreSerie}/capitulos/{nombreCapitulo}", nombreSerie, nombreCapitulo))
+        mockMvc.perform(delete("/api/grupos/{nombreGrupo}/series/{nombreSerie}/capitulos/{nombreCapitulo}", TEST_GROUP, nombreSerie, nombreCapitulo))
                 .andExpect(status().isNoContent());
 
-        verify(serieService).deleteCapitulo(nombreSerie, nombreCapitulo);
+        verify(serieService).deleteCapitulo(TEST_GROUP, nombreSerie, nombreCapitulo);
     }
 }

@@ -48,17 +48,19 @@ public class SerieRestControllerTest {
     @MockBean
     private SerieService serieService;
 
+    private static final String TEST_GROUP = "TestGroup";
+
     @Test
-    void getAllSeries_shouldReturnListOfSeries() throws Exception {
+    void getSeriesByGrupo_shouldReturnListOfSeries() throws Exception {
         // Given
         Serie serie1 = new Serie("Serie A", "Description A");
         Serie serie2 = new Serie("Serie B", "Description B");
         List<Serie> allSeries = Arrays.asList(serie1, serie2);
 
-        when(serieService.buscarTodas()).thenReturn(allSeries);
+        when(serieService.getSeriesPorGrupo(TEST_GROUP)).thenReturn(allSeries);
 
         // When & Then
-        mockMvc.perform(get("/api/series"))
+        mockMvc.perform(get("/api/grupos/{nombreGrupo}/series", TEST_GROUP))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].nombreSerie", is("Serie A")))
@@ -71,10 +73,10 @@ public class SerieRestControllerTest {
     void getSerieByNombre_shouldReturnSerie() throws Exception {
         // Given
         Serie serie = new Serie("Serie A", "Description A");
-        when(serieService.getSerieByNombre("Serie A")).thenReturn(Optional.of(serie));
+        when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, "Serie A")).thenReturn(Optional.of(serie));
 
         // When & Then
-        mockMvc.perform(get("/api/series/Serie A"))
+        mockMvc.perform(get("/api/grupos/{nombreGrupo}/series/{nombreSerie}", TEST_GROUP, "Serie A"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombreSerie", is("Serie A")))
                 .andExpect(jsonPath("$.descripcion", is("Description A")));
@@ -83,23 +85,23 @@ public class SerieRestControllerTest {
     @Test
     void getSerieByNombre_shouldReturnNotFound() throws Exception {
         // Given
-        when(serieService.getSerieByNombre("NonExistent")).thenReturn(Optional.empty());
+        when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, "NonExistent")).thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(get("/api/series/NonExistent"))
+        mockMvc.perform(get("/api/grupos/{nombreGrupo}/series/{nombreSerie}", TEST_GROUP, "NonExistent"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void createSerie_shouldCreateSerie() throws Exception {
         // Given
-        SerieCreateDTO serieCreateDTO = new SerieCreateDTO("New Serie", "New Description", "Grupo A");
+        SerieCreateDTO serieCreateDTO = new SerieCreateDTO("New Serie", "New Description", TEST_GROUP);
         Serie createdSerie = new Serie("New Serie", "New Description");
 
-        when(serieService.createSerie("New Serie", "New Description", "Grupo A")).thenReturn(createdSerie);
+        when(serieService.createSerie("New Serie", "New Description", TEST_GROUP)).thenReturn(createdSerie);
 
         // When & Then
-        mockMvc.perform(post("/api/series")
+        mockMvc.perform(post("/api/grupos/{nombreGrupo}/series", TEST_GROUP)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(serieCreateDTO)))
                 .andExpect(status().isCreated())
@@ -113,10 +115,10 @@ public class SerieRestControllerTest {
         SerieUpdateDTO serieUpdateDTO = new SerieUpdateDTO("Updated Description");
         Serie updatedSerie = new Serie("Serie A", "Updated Description");
 
-        when(serieService.updateSerie("Serie A", "Updated Description")).thenReturn(updatedSerie);
+        when(serieService.updateSerieInGrupo(TEST_GROUP, "Serie A", "Updated Description")).thenReturn(updatedSerie);
 
         // When & Then
-        mockMvc.perform(put("/api/series/Serie A")
+        mockMvc.perform(put("/api/grupos/{nombreGrupo}/series/{nombreSerie}", TEST_GROUP, "Serie A")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(serieUpdateDTO)))
                 .andExpect(status().isOk())
@@ -127,12 +129,12 @@ public class SerieRestControllerTest {
     @Test
     void deleteSerie_shouldDeleteSerie() throws Exception {
         // Given
-        doNothing().when(serieService).deleteSerie("Serie A");
+        doNothing().when(serieService).deleteSerieInGrupo(TEST_GROUP, "Serie A");
 
         // When & Then
-        mockMvc.perform(delete("/api/series/Serie A"))
+        mockMvc.perform(delete("/api/grupos/{nombreGrupo}/series/{nombreSerie}", TEST_GROUP, "Serie A"))
                 .andExpect(status().isNoContent());
 
-        verify(serieService).deleteSerie("Serie A");
+        verify(serieService).deleteSerieInGrupo(TEST_GROUP, "Serie A");
     }
 }

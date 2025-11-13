@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/series/{nombreSerie}/capitulos")
+@RequestMapping("/api/grupos/{nombreGrupo}/series/{nombreSerie}/capitulos")
 public class CapituloRestController {
 
     // No se provee un endpoint PUT para Capítulo ya que su nombre es inmutable y las tareas se gestionan por separado.
@@ -33,9 +33,9 @@ public class CapituloRestController {
     }
 
     @GetMapping
-    public List<CapituloDTO> getCapitulosBySerie(@PathVariable String nombreSerie) {
-        log.info("Solicitud para obtener capítulos de la serie: {}", nombreSerie);
-        Serie serie = serieService.getSerieByNombre(nombreSerie)
+    public List<CapituloDTO> getCapitulosBySerie(@PathVariable String nombreGrupo, @PathVariable String nombreSerie) {
+        log.info("Solicitud para obtener capítulos de la serie: {} en el grupo: {}", nombreSerie, nombreGrupo);
+        Serie serie = serieService.getSerieByNombreAndGrupo(nombreGrupo, nombreSerie)
                 .orElseThrow(() -> new SerieNotFoundException("Serie no encontrada con el nombre: " + nombreSerie));
 
         List<Capitulo> capitulos = serie.getCapitulos();
@@ -53,9 +53,9 @@ public class CapituloRestController {
     }
 
     @GetMapping("/{nombreCapitulo}")
-    public CapituloDTO getCapituloByNombre(@PathVariable String nombreSerie, @PathVariable String nombreCapitulo) {
-        log.info("Solicitud para obtener el capítulo '{}' de la serie '{}'", nombreCapitulo, nombreSerie);
-        Serie serie = serieService.getSerieByNombre(nombreSerie)
+    public CapituloDTO getCapituloByNombre(@PathVariable String nombreGrupo, @PathVariable String nombreSerie, @PathVariable String nombreCapitulo) {
+        log.info("Solicitud para obtener el capítulo '{}' de la serie '{}' en el grupo '{}'", nombreCapitulo, nombreSerie, nombreGrupo);
+        Serie serie = serieService.getSerieByNombreAndGrupo(nombreGrupo, nombreSerie)
                 .orElseThrow(() -> new SerieNotFoundException("Serie no encontrada con el nombre: " + nombreSerie));
 
         Capitulo capitulo = serie.getCapitulos().stream()
@@ -74,9 +74,9 @@ public class CapituloRestController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CapituloDTO createCapitulo(@PathVariable String nombreSerie, @RequestBody CapituloCreateDTO capituloCreateDTO) {
-        log.info("Solicitud para crear el capítulo '{}' para la serie '{}'", capituloCreateDTO.getNombreCapitulo(), nombreSerie);
-        Serie serieActualizada = serieService.addCapituloToSerie(nombreSerie, capituloCreateDTO.getNombreCapitulo());
+    public CapituloDTO createCapitulo(@PathVariable String nombreGrupo, @PathVariable String nombreSerie, @RequestBody CapituloCreateDTO capituloCreateDTO) {
+        log.info("Solicitud para crear el capítulo '{}' para la serie '{}' en el grupo '{}'", capituloCreateDTO.getNombreCapitulo(), nombreSerie, nombreGrupo);
+        Serie serieActualizada = serieService.addCapituloToSerie(nombreGrupo, nombreSerie, capituloCreateDTO.getNombreCapitulo());
 
         Capitulo nuevoCapitulo = serieActualizada.getCapitulos().stream()
                 .filter(c -> c.getNombre().equals(capituloCreateDTO.getNombreCapitulo()))
@@ -94,8 +94,8 @@ public class CapituloRestController {
 
     @PostMapping("/bulk")
     @ResponseStatus(HttpStatus.CREATED)
-    public List<CapituloDTO> createBulkCapitulos(@PathVariable String nombreSerie, @RequestBody CapituloBulkCreateDTO bulkCreateDTO) {
-        log.info("Solicitud para crear capítulos en masa para la serie '{}'", nombreSerie);
+    public List<CapituloDTO> createBulkCapitulos(@PathVariable String nombreGrupo, @PathVariable String nombreSerie, @RequestBody CapituloBulkCreateDTO bulkCreateDTO) {
+        log.info("Solicitud para crear capítulos en masa para la serie '{}' en el grupo '{}'", nombreSerie, nombreGrupo);
 
         // Convert List<TareaCreateDTO> to String[] expected by service
         String[] tareasEnMasaArray = bulkCreateDTO.getTareasEnMasa().stream()
@@ -105,7 +105,7 @@ public class CapituloRestController {
                         tareaDTO.getUsuarioAsignado() != null ? tareaDTO.getUsuarioAsignado() : "NADIE")) // Default if null
                 .toArray(String[]::new);
 
-        Serie serieActualizada = serieService.addCapitulosToSerie(nombreSerie, bulkCreateDTO.getNombresCapitulos(), tareasEnMasaArray);
+        Serie serieActualizada = serieService.addCapitulosToSerie(nombreGrupo, nombreSerie, bulkCreateDTO.getNombresCapitulos(), tareasEnMasaArray);
 
         // Return the newly created chapters as DTOs
         return serieActualizada.getCapitulos().stream()
@@ -122,8 +122,8 @@ public class CapituloRestController {
 
     @DeleteMapping("/{nombreCapitulo}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteCapitulo(@PathVariable String nombreSerie, @PathVariable String nombreCapitulo) {
-        log.info("Solicitud para eliminar el capítulo '{}' de la serie '{}'", nombreCapitulo, nombreSerie);
-        serieService.deleteCapitulo(nombreSerie, nombreCapitulo);
+    public void deleteCapitulo(@PathVariable String nombreGrupo, @PathVariable String nombreSerie, @PathVariable String nombreCapitulo) {
+        log.info("Solicitud para eliminar el capítulo '{}' de la serie '{}' en el grupo '{}'", nombreCapitulo, nombreSerie, nombreGrupo);
+        serieService.deleteCapitulo(nombreGrupo, nombreSerie, nombreCapitulo);
     }
 }

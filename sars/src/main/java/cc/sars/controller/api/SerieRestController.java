@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/series")
+@RequestMapping("/api/grupos/{nombreGrupo}/series")
 public class SerieRestController {
 
     private static final Logger log = LoggerFactory.getLogger(SerieRestController.class);
@@ -26,43 +26,44 @@ public class SerieRestController {
     }
 
     @GetMapping
-    public List<SerieDTO> getAllSeries() {
-        log.info("Solicitud para obtener todas las series");
-        List<Serie> series = serieService.buscarTodas();
+    public List<SerieDTO> getSeriesByGrupo(@PathVariable String nombreGrupo) {
+        log.info("Solicitud para obtener todas las series del grupo {}", nombreGrupo);
+        List<Serie> series = serieService.getSeriesPorGrupo(nombreGrupo);
         List<SerieDTO> seriesDTO = series.stream()
                 .map(serie -> new SerieDTO(serie.getNombre(), serie.getDescripcion()))
                 .collect(Collectors.toList());
-        log.info("Se encontraron {} series", seriesDTO.size());
+        log.info("Se encontraron {} series para el grupo {}", seriesDTO.size(), nombreGrupo);
         return seriesDTO;
     }
 
-    @GetMapping("/{nombre}")
-    public SerieDTO getSerieByNombre(@PathVariable String nombre) {
-        log.info("Solicitud para obtener serie por nombre: {}", nombre);
-        Serie serie = serieService.getSerieByNombre(nombre)
-                .orElseThrow(() -> new cc.sars.exception.SerieNotFoundException("Serie no encontrada con el nombre: " + nombre));
+    @GetMapping("/{nombreSerie}")
+    public SerieDTO getSerieByNombre(@PathVariable String nombreGrupo, @PathVariable String nombreSerie) {
+        log.info("Solicitud para obtener serie por nombre: {} en el grupo {}", nombreSerie, nombreGrupo);
+        Serie serie = serieService.getSerieByNombreAndGrupo(nombreGrupo, nombreSerie)
+                .orElseThrow(() -> new cc.sars.exception.SerieNotFoundException("Serie no encontrada con el nombre: " + nombreSerie + " en el grupo: " + nombreGrupo));
         return new SerieDTO(serie.getNombre(), serie.getDescripcion());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public SerieDTO createSerie(@RequestBody SerieCreateDTO serieCreateDTO) {
-        log.info("Solicitud para crear serie: {}", serieCreateDTO.getNombre());
-        Serie nuevaSerie = serieService.createSerie(serieCreateDTO.getNombre(), serieCreateDTO.getDescripcion(), serieCreateDTO.getNombreGrupo());
+    public SerieDTO createSerie(@PathVariable String nombreGrupo, @RequestBody SerieCreateDTO serieCreateDTO) {
+        log.info("Solicitud para crear serie: {} en el grupo {}", serieCreateDTO.getNombre(), nombreGrupo);
+        // Usamos el nombreGrupo del path, ignorando el que pueda venir en el DTO.
+        Serie nuevaSerie = serieService.createSerie(serieCreateDTO.getNombre(), serieCreateDTO.getDescripcion(), nombreGrupo);
         return new SerieDTO(nuevaSerie.getNombre(), nuevaSerie.getDescripcion());
     }
 
-    @PutMapping("/{nombre}")
-    public SerieDTO updateSerie(@PathVariable String nombre, @RequestBody SerieUpdateDTO serieUpdateDTO) {
-        log.info("Solicitud para actualizar serie: {}", nombre);
-        Serie serieActualizada = serieService.updateSerie(nombre, serieUpdateDTO.getDescripcion());
+    @PutMapping("/{nombreSerie}")
+    public SerieDTO updateSerie(@PathVariable String nombreGrupo, @PathVariable String nombreSerie, @RequestBody SerieUpdateDTO serieUpdateDTO) {
+        log.info("Solicitud para actualizar serie: {} en el grupo {}", nombreSerie, nombreGrupo);
+        Serie serieActualizada = serieService.updateSerieInGrupo(nombreGrupo, nombreSerie, serieUpdateDTO.getDescripcion());
         return new SerieDTO(serieActualizada.getNombre(), serieActualizada.getDescripcion());
     }
 
-    @DeleteMapping("/{nombre}")
+    @DeleteMapping("/{nombreSerie}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteSerie(@PathVariable String nombre) {
-        log.info("Solicitud para eliminar serie: {}", nombre);
-        serieService.deleteSerie(nombre);
+    public void deleteSerie(@PathVariable String nombreGrupo, @PathVariable String nombreSerie) {
+        log.info("Solicitud para eliminar serie: {} en el grupo {}", nombreSerie, nombreGrupo);
+        serieService.deleteSerieInGrupo(nombreGrupo, nombreSerie);
     }
 }

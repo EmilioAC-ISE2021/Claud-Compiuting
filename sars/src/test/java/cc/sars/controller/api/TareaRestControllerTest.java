@@ -3,9 +3,11 @@ package cc.sars.controller.api;
 import cc.sars.config.SecurityConfig;
 import cc.sars.model.Capitulo;
 import cc.sars.model.EstadosTareas;
+import cc.sars.model.Serie;
 import cc.sars.model.Tarea;
 import cc.sars.service.SerieService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -48,6 +50,18 @@ public class TareaRestControllerTest {
     @MockBean
     private SerieService serieService;
 
+    private static final String TEST_GROUP = "TestGroup";
+    private static final String TEST_SERIE = "SerieA";
+    private Serie serie;
+    private Capitulo capitulo;
+
+    @BeforeEach
+    void setUp() {
+        serie = new Serie(TEST_SERIE, "Description");
+        capitulo = new Capitulo("Chapter 1");
+        serie.addCapitulo(capitulo);
+    }
+
     @Test
     void getTareasByCapitulo_shouldReturnTareas() throws Exception {
         // Given
@@ -59,14 +73,13 @@ public class TareaRestControllerTest {
         tarea2.setEstadoTarea(EstadosTareas.Asignado);
         tarea2.setUsuarioAsignado("user1");
 
-        Capitulo capitulo = new Capitulo("Chapter 1");
         capitulo.anyadirTarea(tarea1);
         capitulo.anyadirTarea(tarea2);
 
-        when(serieService.getCapituloByNombre("Chapter 1")).thenReturn(Optional.of(capitulo));
+        when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, TEST_SERIE)).thenReturn(Optional.of(serie));
 
         // When & Then
-        mockMvc.perform(get("/api/series/Serie A/capitulos/Chapter 1/tareas"))
+        mockMvc.perform(get("/api/grupos/{g}/series/{s}/capitulos/{c}/tareas", TEST_GROUP, TEST_SERIE, "Chapter 1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].nombre", is("Task 1")))
@@ -80,10 +93,10 @@ public class TareaRestControllerTest {
     @Test
     void getTareasByCapitulo_shouldReturnNotFound_whenCapituloNotFound() throws Exception {
         // Given
-        when(serieService.getCapituloByNombre("NonExistentChapter")).thenReturn(Optional.empty());
+        when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, TEST_SERIE)).thenReturn(Optional.of(serie));
 
         // When & Then
-        mockMvc.perform(get("/api/series/Serie A/capitulos/NonExistentChapter/tareas"))
+        mockMvc.perform(get("/api/grupos/{g}/series/{s}/capitulos/{c}/tareas", TEST_GROUP, TEST_SERIE, "NonExistentChapter"))
                 .andExpect(status().isNotFound());
     }
 
@@ -91,15 +104,14 @@ public class TareaRestControllerTest {
     void addTareaToCapitulo_shouldCreateTarea() throws Exception {
         // Given
         TareaCreateDTO tareaCreateDTO = new TareaCreateDTO("New Task");
-        Capitulo capitulo = new Capitulo("Chapter 1");
-        Tarea newTarea = new Tarea("New Task");
         Capitulo updatedCapitulo = new Capitulo("Chapter 1");
-        updatedCapitulo.anyadirTarea(newTarea);
+        updatedCapitulo.anyadirTarea(new Tarea("New Task"));
 
+        when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, TEST_SERIE)).thenReturn(Optional.of(serie));
         when(serieService.addTareaToCapitulo("Chapter 1", "New Task")).thenReturn(updatedCapitulo);
 
         // When & Then
-        mockMvc.perform(post("/api/series/Serie A/capitulos/Chapter 1/tareas")
+        mockMvc.perform(post("/api/grupos/{g}/series/{s}/capitulos/{c}/tareas", TEST_GROUP, TEST_SERIE, "Chapter 1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(tareaCreateDTO)))
                 .andExpect(status().isCreated())
@@ -114,10 +126,11 @@ public class TareaRestControllerTest {
         updatedTarea.setEstadoTarea(EstadosTareas.Completado);
         updatedTarea.setUsuarioAsignado("user2");
 
+        when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, TEST_SERIE)).thenReturn(Optional.of(serie));
         when(serieService.updateTarea("Chapter 1", "Task 1", EstadosTareas.Completado, "user2")).thenReturn(updatedTarea);
 
         // When & Then
-        mockMvc.perform(put("/api/series/Serie A/capitulos/Chapter 1/tareas/Task 1")
+        mockMvc.perform(put("/api/grupos/{g}/series/{s}/capitulos/{c}/tareas/{t}", TEST_GROUP, TEST_SERIE, "Chapter 1", "Task 1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(tareaUpdateDTO)))
                 .andExpect(status().isOk())
@@ -133,10 +146,11 @@ public class TareaRestControllerTest {
         tarea.setEstadoTarea(EstadosTareas.NoAsignado);
         tarea.setUsuarioAsignado("NADIE");
 
+        when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, TEST_SERIE)).thenReturn(Optional.of(serie));
         when(serieService.getTareaByNombre("Chapter 1", "Task 1")).thenReturn(Optional.of(tarea));
 
         // When & Then
-        mockMvc.perform(get("/api/series/Serie A/capitulos/Chapter 1/tareas/Task 1"))
+        mockMvc.perform(get("/api/grupos/{g}/series/{s}/capitulos/{c}/tareas/{t}", TEST_GROUP, TEST_SERIE, "Chapter 1", "Task 1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombre", is("Task 1")))
                 .andExpect(jsonPath("$.estado", is("NoAsignado")))
@@ -146,10 +160,11 @@ public class TareaRestControllerTest {
     @Test
     void deleteTarea_shouldDeleteTarea() throws Exception {
         // Given
+        when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, TEST_SERIE)).thenReturn(Optional.of(serie));
         // No specific setup needed for service method that returns void
 
         // When & Then
-        mockMvc.perform(delete("/api/series/Serie A/capitulos/Chapter 1/tareas/Task 1"))
+        mockMvc.perform(delete("/api/grupos/{g}/series/{s}/capitulos/{c}/tareas/{t}", TEST_GROUP, TEST_SERIE, "Chapter 1", "Task 1"))
                 .andExpect(status().isNoContent());
     }
 }

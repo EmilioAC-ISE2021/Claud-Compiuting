@@ -34,6 +34,17 @@ public class GrupoService {
     }
 
     /**
+     * Crea un nuevo grupo.
+     */
+    public Grupo crearGrupo(String nombreGrupo) {
+        if (grupoRepository.findByNombre(nombreGrupo).isPresent()) {
+            throw new RuntimeException("Error: El grupo con el nombre '" + nombreGrupo + "' ya existe.");
+        }
+        Grupo nuevoGrupo = new Grupo(nombreGrupo);
+        return grupoRepository.save(nuevoGrupo);
+    }
+
+    /**
      * Añade un usuario existente (por su username) a un grupo existente (por su nombre).
      */
     public void agregarUsuarioAGrupo(String nombreUsuario, String nombreGrupo) {

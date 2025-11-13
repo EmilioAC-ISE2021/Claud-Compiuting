@@ -167,4 +167,71 @@ public class UsuarioService {
         userRepository.deleteById(username);
     }
 
+    /**
+     * Crea un nuevo usuario y lo asigna a un grupo existente.
+     */
+    public User crearUsuario(String username, String password, Role role, String nombreGrupo) {
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new RuntimeException("Error: El nombre de usuario '" + username + "' ya existe.");
+        }
+        Grupo grupo = grupoRepository.findByNombre(nombreGrupo)
+                .orElseThrow(() -> new RuntimeException("Grupo no encontrado: " + nombreGrupo));
+
+        User nuevoUsuario = new User(
+                username,
+                passwordEncoder.encode(password),
+                role
+        );
+        
+        grupo.agregarUsuario(nuevoUsuario); // Adds user to group's collection
+        nuevoUsuario.addGrupo(grupo); // Adds group to user's collection for bidirectional consistency
+        userRepository.save(nuevoUsuario);
+        grupoRepository.save(grupo);
+        
+        return nuevoUsuario;
+    }
+
+    /**
+     * Actualiza el rol y el grupo de un usuario.
+     * Reemplaza todas las asignaciones de grupo anteriores por la nueva.
+     */
+    public User actualizarUsuario(String username, Role nuevoRol, String nuevoNombreGrupo) {
+        User usuarioActualizar = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + username));
+
+        Grupo nuevoGrupo = grupoRepository.findByNombre(nuevoNombreGrupo)
+                .orElseThrow(() -> new RuntimeException("Grupo no encontrado: " + nuevoNombreGrupo));
+
+        // Validar si el cambio de rol es permitido (no dejar un grupo sin LIDER)
+        if (usuarioActualizar.getRole() == Role.ROLE_LIDER && nuevoRol != Role.ROLE_LIDER) {
+            for (Grupo grupoAnterior : usuarioActualizar.getGrupos()) {
+                // Si el grupo antiguo no es el nuevo grupo, verifica si se queda sin líder
+                if (!grupoAnterior.equals(nuevoGrupo)) {
+                    long leaderCount = grupoAnterior.getUsuarios().stream()
+                        .filter(u -> u.getRole() == Role.ROLE_LIDER && !u.getUsername().equals(username))
+                        .count();
+                    if (leaderCount == 0) {
+                        throw new RuntimeException("No se puede cambiar el rol. El grupo '" + grupoAnterior.getNombre() + "' se quedaría sin LIDER.");
+                    }
+                }
+            }
+        }
+
+        // Limpiar grupos anteriores y añadir el nuevo
+        for (Grupo grupo : new HashSet<>(usuarioActualizar.getGrupos())) {
+            grupo.removeUsuario(usuarioActualizar); // Removes user from old group's collection
+            usuarioActualizar.removeGrupo(grupo); // Removes group from user's collection
+            grupoRepository.save(grupo);
+        }
+        // usuarioActualizar.getGrupos().clear(); // This is now handled by removeGrupo calls
+
+        nuevoGrupo.agregarUsuario(usuarioActualizar); // Adds user to new group's collection
+        usuarioActualizar.addGrupo(nuevoGrupo); // Adds new group to user's collection
+        usuarioActualizar.setRole(nuevoRol);
+
+        userRepository.save(usuarioActualizar);
+        grupoRepository.save(nuevoGrupo);
+
+        return usuarioActualizar;
+    }
 }
