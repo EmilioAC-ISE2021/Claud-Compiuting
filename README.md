@@ -15,6 +15,6 @@ Las historias de ususario que describen la funcionalidad del proyecto pueden enc
 La documentación de los hitos puede encontrarse aquí:
 [Hito 1](/hitos/1.md)
 [Hito 2](/hitos/2.md)
-[Hito 2](/hitos/3.md)
+[Hito 3](/hitos/3.md)
 [Hito 4](https://static.wikia.nocookie.net/doraemon/images/b/b2/The_doraemons_doranichov_by_mugenmusouka-d4whhrf.gif/revision/latest?cb=20131225122514&path-prefix=en)
 [Hito 5](https://static.wikia.nocookie.net/doraemon/images/b/b4/The_doraemons_el_matadora_by_mugenmusouka-d4whi29_FROM_SPAIN.gif/revision/latest?cb=20131224141928&path-prefix=en)
