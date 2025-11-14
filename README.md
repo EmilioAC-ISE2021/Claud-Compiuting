@@ -8,13 +8,13 @@ Cuando todas las tareas han sido completadas, aparece la tarea de control de cal
 
 Los espisodios se verán así:
 
-![Episodios](https://i.postimg.cc/ZKVfPNP6/drmfnsbs.png)
+![Episodios](/hitos/recursos/readme/app.png)
 
 Las historias de ususario que describen la funcionalidad del proyecto pueden encontrarse [aquí](/Historias)
 
 La documentación de los hitos puede encontrarse aquí:
 [Hito 1](/hitos/1.md)
 [Hito 2](/hitos/2.md)
-[Hito 3](https://static.wikia.nocookie.net/doraemon/images/9/96/The_doraemons_dora_the_kid_by_mugenmusouka-d4whicx_from_USA.gif/revision/latest?cb=20131222121445&path-prefix=en)
+[Hito 2](/hitos/3.md)
 [Hito 4](https://static.wikia.nocookie.net/doraemon/images/b/b2/The_doraemons_doranichov_by_mugenmusouka-d4whhrf.gif/revision/latest?cb=20131225122514&path-prefix=en)
 [Hito 5](https://static.wikia.nocookie.net/doraemon/images/b/b4/The_doraemons_el_matadora_by_mugenmusouka-d4whi29_FROM_SPAIN.gif/revision/latest?cb=20131224141928&path-prefix=en)
