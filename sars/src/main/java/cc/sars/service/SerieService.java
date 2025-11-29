@@ -11,6 +11,8 @@ import cc.sars.repository.CapituloRepository;
 import cc.sars.repository.GrupoRepository;
 import cc.sars.repository.SerieRepository;
 import cc.sars.repository.UserRepository; // Added import
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,8 @@ import java.util.Optional;
 @Service
 @Transactional
 public class SerieService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SerieService.class);
 
     private final SerieRepository serieRepository;
     private final CapituloRepository capituloRepository;
@@ -178,7 +182,7 @@ public class SerieService {
               .filter(nombre -> !nombre.isEmpty())
               .forEach(nombreCapitulo -> {
                   if (capituloRepository.findByNombre(nombreCapitulo).isPresent()) {
-                      System.err.println("Advertencia: El capítulo con el nombre '" + nombreCapitulo + "' ya existe y será omitido.");
+                      logger.warn("El capítulo con el nombre '{}' ya existe y será omitido.", nombreCapitulo);
                       return; // Saltar este capítulo y continuar con el siguiente
                   }
 
@@ -201,7 +205,7 @@ public class SerieService {
                                     nuevaTarea.setUsuarioAsignado(usuarioAsignado);
                                     nuevoCapitulo.anyadirTarea(nuevaTarea);
                                 } else {
-                                    System.err.println("Advertencia: Formato de tarea en masa incorrecto: " + tareaData);
+                                    logger.warn("Formato de tarea en masa incorrecto: {}", tareaData);
                                 }
                             });
                   }
@@ -261,7 +265,7 @@ public class SerieService {
               .filter(nombre -> !nombre.isEmpty())
               .forEach(nombreCapitulo -> {
                   if (capituloRepository.findByNombre(nombreCapitulo).isPresent()) {
-                      System.err.println("Advertencia: El capítulo con el nombre '" + nombreCapitulo + "' ya existe y será omitido.");
+                      logger.warn("El capítulo con el nombre '{}' ya existe y será omitido.", nombreCapitulo);
                       return; // Saltar este capítulo y continuar con el siguiente
                   }
 
@@ -284,7 +288,7 @@ public class SerieService {
                                     nuevaTarea.setUsuarioAsignado(usuarioAsignado);
                                     nuevoCapitulo.anyadirTarea(nuevaTarea);
                                 } else {
-                                    System.err.println("Advertencia: Formato de tarea en masa incorrecto: " + tareaData);
+                                    logger.warn("Formato de tarea en masa incorrecto: {}", tareaData);
                                 }
                             });
                   }

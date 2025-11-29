@@ -4,6 +4,8 @@ import cc.sars.model.EstadosTareas;
 import cc.sars.model.Serie;
 import cc.sars.model.User;
 import cc.sars.service.SerieService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 @Controller
 public class SerieController {
 
+    private static final Logger logger = LoggerFactory.getLogger(SerieController.class);
     private final SerieService serieService;
 
     public SerieController(SerieService serieService) {
@@ -36,7 +39,7 @@ public class SerieController {
         try {
             serieService.createSerie(nombre, descripcion, nombreGrupo);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            logger.error("Error al crear serie '{}': {}", nombre, e.getMessage(), e);
         }
         return "redirect:/";
     }
@@ -65,7 +68,7 @@ public class SerieController {
         try {
             serieService.addCapitulosToSerie(nombreSerie, nombresCapitulos, tareasEnMasa);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            logger.error("Error al crear capítulos para la serie '{}': {}", nombreSerie, e.getMessage(), e);
         }
         return "redirect:/serie/" + nombreSerie;
     }
@@ -80,7 +83,7 @@ public class SerieController {
         try {
             serieService.addTareaToCapitulo(nombreCapitulo, nombreTarea);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            logger.error("Error al crear tarea '{}' en capítulo '{}': {}", nombreTarea, nombreCapitulo, e.getMessage(), e);
         }
         return "redirect:/serie/" + nombreSerie;
     }
@@ -99,7 +102,7 @@ public class SerieController {
             // Pasar el usuario al servicio
             serieService.updateTareaEstado(nombreCapitulo, nombreTarea, estado, usuarioActual);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            logger.error("Error al actualizar estado de tarea '{}' a '{}': {}", nombreTarea, estado, e.getMessage(), e);
         }
         return "redirect:/serie/" + nombreSerie;
     }
@@ -116,7 +119,7 @@ public class SerieController {
         try {
             serieService.asignarUsuarioATarea(nombreSerie, nombreCapitulo, nombreTarea, nuevoUsuarioAsignado, usuarioActual);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            logger.error("Error al asignar usuario '{}' a tarea '{}': {}", nuevoUsuarioAsignado, nombreTarea, e.getMessage(), e);
         }
         return "redirect:/serie/" + nombreSerie;
     }
@@ -127,7 +130,7 @@ public class SerieController {
         try {
             serieService.deleteCapitulo(nombreSerie, nombreCapitulo);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            logger.error("Error al eliminar capítulo '{}' de la serie '{}': {}", nombreCapitulo, nombreSerie, e.getMessage(), e);
         }
         return "redirect:/serie/" + nombreSerie;
     }
@@ -137,7 +140,7 @@ public class SerieController {
         try {
             serieService.deleteSerie(nombreSerie);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            logger.error("Error al eliminar serie '{}': {}", nombreSerie, e.getMessage(), e);
         }
         return "redirect:/";
     }

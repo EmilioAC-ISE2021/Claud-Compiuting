@@ -159,7 +159,7 @@ public class GrupoController {
         try {
             grupoService.deleteGrupo(nombreGrupo);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            logger.error("Error al eliminar grupo '{}': {}", nombreGrupo, e.getMessage(), e);
         }
         return "redirect:/";
     }

@@ -5,6 +5,8 @@ import cc.sars.model.Role;
 import cc.sars.model.User;
 import cc.sars.service.GrupoService;
 import cc.sars.service.UsuarioService; // Importar UsuarioService
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -21,6 +23,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @PreAuthorize("hasRole('ROLE_ADMIN')") // Solo usuarios con rol ADMIN pueden acceder a este controlador
 public class AdminController {
 
+    private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
     private final GrupoService grupoService;
     private final UsuarioService usuarioService; // Inyectar UsuarioService
 
@@ -66,6 +69,7 @@ public class AdminController {
             grupoService.deleteGrupo(nombreGrupo);
             redirectAttributes.addFlashAttribute("success_message", "Grupo '" + nombreGrupo + "' eliminado correctamente.");
         } catch (Exception e) {
+            logger.error("Error al eliminar el grupo '{}': {}", nombreGrupo, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error_message", "Error al eliminar el grupo: " + e.getMessage());
         }
         return "redirect:/admin";
@@ -77,6 +81,7 @@ public class AdminController {
             usuarioService.eliminarUsuario(username); // Llamar al método en español con username
             redirectAttributes.addFlashAttribute("success_message", "Usuario '" + username + "' eliminado correctamente.");
         } catch (Exception e) {
+            logger.error("Error al eliminar el usuario '{}': {}", username, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error_message", "Error al eliminar el usuario '" + username + "': " + e.getMessage());
         }
         return "redirect:/admin";
