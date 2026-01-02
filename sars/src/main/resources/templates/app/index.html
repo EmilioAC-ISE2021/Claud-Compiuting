@@ -9,8 +9,8 @@
             Grupo: <span class="fw-bold" th:text="${grupo.nombre}">Nombre del Grupo</span>
         </h2>
         
-        <a th:if="${usuario.role.name() == 'ROLE_LIDER'}" 
-           th:href="@{/grupo/gestionar}" 
+        <a th:if="${rolEnGrupoActual.name() == 'ROLE_LIDER'}" 
+           th:href="@{/grupo/{nombreGrupo}/gestionar(nombreGrupo=${grupo.nombre})}" 
            class="btn btn-outline-secondary">
             Gestionar Usuarios del Grupo
         </a>
@@ -18,7 +18,7 @@
 
     <hr>
 
-    <div sec:authorize="hasRole('ROLE_LIDER')">
+    <div th:if="${rolEnGrupoActual.name() == 'ROLE_LIDER'}">
         <div class="row">
             <div class="col-md-8 offset-md-2">
                 <h4 class="mb-3">Crear Nueva Serie</h4>
@@ -43,8 +43,11 @@
         <div class="col-md-10 offset-md-1">
             <h4 class="mb-3">Series del Grupo</h4>
             
-            <div th:if="${series.isEmpty()}" class="alert alert-info">
+            <div th:if="${series.isEmpty() and rolEnGrupoActual.name() == 'ROLE_LIDER'}" class="alert alert-info">
                 Este grupo aún no tiene series. ¡Crea una!
+            </div>
+            <div th:if="${series.isEmpty() and rolEnGrupoActual.name() != 'ROLE_LIDER'}" class="alert alert-info">
+                Este grupo aún no tiene series.
             </div>
 
             <table class="table table-hover" th:if="${!series.isEmpty()}">
@@ -58,7 +61,7 @@
                         <td>
                             <div class="d-flex justify-content-between align-items-center">
                                 <a th:href="@{/serie/{nombreSerie}(nombreSerie=${serie.nombre})}" th:text="${serie.nombre}">Nombre de Serie</a>
-                                <form th:action="@{/serie/{nombreSerie}/eliminar(nombreSerie=${serie.nombre})}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta serie?');" sec:authorize="hasRole('ROLE_LIDER')">
+                                <form th:action="@{/serie/{nombreSerie}/eliminar(nombreSerie=${serie.nombre})}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta serie?');" th:if="${rolEnGrupoActual.name() == 'ROLE_LIDER'}">
                                     <button type="submit" class="btn btn-danger btn-sm">
                                         <i class="bi bi-trash"></i>
                                     </button>
@@ -71,7 +74,7 @@
         </div>
     </div>
 
-    <div class="row mt-5" sec:authorize="hasRole('ROLE_LIDER')">
+    <div class="row mt-5" th:if="${rolEnGrupoActual.name() == 'ROLE_LIDER'}">
         <div class="col-md-10 offset-md-1">
             <div class="card border-danger">
                 <div class="card-header bg-danger text-white">

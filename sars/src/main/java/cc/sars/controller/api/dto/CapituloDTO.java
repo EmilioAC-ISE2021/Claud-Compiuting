@@ -5,9 +5,9 @@ import java.util.List;
 public class CapituloDTO {
     private String nombreCapitulo;
     private String nombreSerie; // Add serie name for context
-    private List<TareaResponseDTO> tareas;
+    private List<TareaDTO> tareas;
 
-    public CapituloDTO(String nombreCapitulo, String nombreSerie, List<TareaResponseDTO> tareas) {
+    public CapituloDTO(String nombreCapitulo, String nombreSerie, List<TareaDTO> tareas) {
         this.nombreCapitulo = nombreCapitulo;
         this.nombreSerie = nombreSerie;
         this.tareas = tareas;
@@ -22,7 +22,7 @@ public class CapituloDTO {
         return nombreSerie;
     }
 
-    public List<TareaResponseDTO> getTareas() {
+    public List<TareaDTO> getTareas() {
         return tareas;
     }
 }

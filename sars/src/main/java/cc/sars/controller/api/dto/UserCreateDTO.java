@@ -5,7 +5,7 @@ import cc.sars.model.Role;
 public class UserCreateDTO {
     private String username;
     private String password;
-    private Role role;
+    private Role rolEnGrupo;
     private String nombreGrupo;
 
     // Getters and Setters
@@ -25,12 +25,12 @@ public class UserCreateDTO {
         this.password = password;
     }
 
-    public Role getRole() {
-        return role;
+    public Role getRolEnGrupo() {
+        return rolEnGrupo;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
+    public void setRolEnGrupo(Role rolEnGrupo) {
+        this.rolEnGrupo = rolEnGrupo;
     }
 
     public String getNombreGrupo() {

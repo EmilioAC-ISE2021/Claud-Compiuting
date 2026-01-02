@@ -47,7 +47,12 @@ public class CapituloRestControllerTest {
     @MockBean
     private SerieService serieService;
 
+    @MockBean
+    private cc.sars.service.UsuarioService usuarioService;
+
     private static final String TEST_GROUP = "TestGroup";
+
+
 
     @Test
     void getCapitulosBySerie_shouldReturnListOfCapitulos() throws Exception {

@@ -6,19 +6,21 @@ import cc.sars.model.EstadosTareas;
 import cc.sars.model.Grupo;
 import cc.sars.model.Serie;
 import cc.sars.model.Tarea;
-import cc.sars.model.User; // Importar User
+import cc.sars.model.User;
 import cc.sars.repository.CapituloRepository;
 import cc.sars.repository.GrupoRepository;
 import cc.sars.repository.SerieRepository;
-import cc.sars.repository.UserRepository; // Added import
+import cc.sars.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import cc.sars.exception.CcTaskCompletedException;
+import cc.sars.exception.AssignmentForbiddenException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.context.annotation.Lazy;
 
 @Service
 @Transactional
@@ -29,13 +31,15 @@ public class SerieService {
     private final SerieRepository serieRepository;
     private final CapituloRepository capituloRepository;
     private final GrupoRepository grupoRepository;
-    private final UserRepository userRepository; // Añadir dependencia
+    private final UserRepository userRepository;
+    private final @Lazy UsuarioService usuarioService;
 
-    public SerieService(SerieRepository serieRepository, CapituloRepository capituloRepository, GrupoRepository grupoRepository, UserRepository userRepository) { // Modificar constructor
+    public SerieService(SerieRepository serieRepository, CapituloRepository capituloRepository, GrupoRepository grupoRepository, UserRepository userRepository, @Lazy UsuarioService usuarioService) {
         this.serieRepository = serieRepository;
         this.capituloRepository = capituloRepository;
         this.grupoRepository = grupoRepository;
         this.userRepository = userRepository;
+        this.usuarioService = usuarioService;
     }
 
     // --- MÉTODOS PARA SERIES ---
@@ -384,7 +388,7 @@ public class SerieService {
         capituloRepository.save(capitulo);
     }
 
-    // TODO: Implementar lógica de autorización
+
     public Tarea updateTarea(String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado, String nuevoUsuarioAsignado) {
         Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
                 .orElseThrow(() -> new SerieNotFoundException("No se encontró el capítulo: " + nombreCapitulo));
@@ -404,22 +408,27 @@ public class SerieService {
      * Actualiza el estado de una tarea.
      * Gestiona la asignación (al usuario actual) y el bloqueo de la tarea.
      */
-        public Capitulo updateTareaEstado(String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado, User usuarioActual) {
-    
+        public Capitulo updateTareaEstado(String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado, String nombreUsuarioActual) {
             Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
                     .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
-    
+            
+            // Obtener el grupo asociado a la tarea
+            Serie serie = capitulo.getSerie();
+            Grupo grupo = serie.getGrupo();
+
             Tarea tareaAActualizar = capitulo.getTareas().stream()
                     .filter(tarea -> tarea.getNombre().equals(nombreTarea))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("No se encontró la tarea: " + nombreTarea));
     
             String usuarioAsignado = tareaAActualizar.getUsuarioAsignado();
-            String nombreUsuarioActual = usuarioActual.getUsername();
             EstadosTareas estadoActual = tareaAActualizar.getEstadoTarea(); // Obtener estado actual
     
+            User usuarioActual = usuarioService.findByUsername(nombreUsuarioActual)
+                    .orElseThrow(() -> new RuntimeException("Usuario actual no encontrado: " + nombreUsuarioActual));
+    
             // Lógica para LÍDER: Puede cambiar el estado como quiera
-            if (usuarioActual.getRole() == cc.sars.model.Role.ROLE_LIDER) {
+            if (usuarioService.esLiderEnGrupo(usuarioActual, grupo)) {
                 if (nuevoEstado == EstadosTareas.Asignado) {
                     tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual);
                 } else if (nuevoEstado == EstadosTareas.NoAsignado || nuevoEstado == EstadosTareas.Repetir) {
@@ -436,14 +445,15 @@ public class SerieService {
                         .filter(t -> t.getNombre().equals("CC"))
                         .findFirst();
 
+
                 if (ccTaskOptional.isPresent() && ccTaskOptional.get().getEstadoTarea() == EstadosTareas.Completado) {
                     // Si la tarea CC está completada, solo el LIDER puede cambiar el estado de la tarea.
                     // Como estamos en el bloque 'else' (no LIDER), lanzar excepción.
-                    throw new RuntimeException("No puedes cambiar el estado de las tareas en este capítulo porque la tarea 'CC' está completada.");
+                    throw new CcTaskCompletedException("No puedes cambiar el estado de las tareas en este capítulo porque la tarea 'CC' está completada.");
                 }
                 
                 // Condición especial para ROLE_QC: puede marcar como "Repetir" una tarea "Completado" de otro.
-                if (usuarioActual.getRole() == cc.sars.model.Role.ROLE_QC &&
+                if (usuarioService.esQcEnGrupo(usuarioActual, grupo) &&
                     nuevoEstado == EstadosTareas.Repetir &&
                     estadoActual == EstadosTareas.Completado) {
                     
@@ -490,30 +500,42 @@ public class SerieService {
     /**
      * Asigna un usuario a una tarea específica. Solo un LÍDER puede realizar esta acción.
      */
-    public void asignarUsuarioATarea(String nombreSerie, String nombreCapitulo, String nombreTarea, String nuevoUsuarioAsignadoUsername, User lider) {
-        // 1. Autorización: Solo un LÍDER puede asignar usuarios
-        if (lider.getRole() != cc.sars.model.Role.ROLE_LIDER) {
-            throw new RuntimeException("Solo un LÍDER puede asignar usuarios a las tareas.");
+    public void asignarUsuarioATarea(String nombreSerie, String nombreCapitulo, String nombreTarea, String nuevoUsuarioAsignadoUsername, String liderUsername) {
+        // 1. Encontrar el capítulo, la serie y el grupo
+        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+                .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
+        
+        Serie serie = capitulo.getSerie(); 
+        Grupo grupo = serie.getGrupo();
+        
+        // 2. Obtener el usuario líder que realiza la acción
+        User lider = userRepository.findByUsername(liderUsername)
+                .orElseThrow(() -> new RuntimeException("Usuario líder no encontrado: " + liderUsername));
+
+        // 3. Autorización: Verificar que el usuario 'lider' es LÍDER en este grupo
+        if (!usuarioService.esLiderEnGrupo(lider, grupo)) {
+            throw new AssignmentForbiddenException("Solo un LÍDER del grupo '" + grupo.getNombre() + "' puede asignar usuarios a las tareas.");
         }
 
-        // 2. Encontrar el capítulo
-        Capitulo capitulo = capituloRepository.findByNombre(nombreCapitulo)
-                .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
-
-        // 3. Encontrar la tarea
+        // 4. Encontrar la tarea
         Tarea tareaAActualizar = capitulo.getTareas().stream()
                 .filter(tarea -> tarea.getNombre().equals(nombreTarea))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No se encontró la tarea: " + nombreTarea));
 
-        // 4. Verificar que el nuevo usuario asignado existe
+        // 5. Verificar que el nuevo usuario asignado existe
         User nuevoUsuario = userRepository.findByUsername(nuevoUsuarioAsignadoUsername)
                 .orElseThrow(() -> new SerieNotFoundException("No se encontró el usuario a asignar: " + nuevoUsuarioAsignadoUsername));
 
-        // 5. Actualizar el usuario asignado
+        // 6. Verificar que el nuevo usuario asignado pertenece al grupo de la tarea
+        if (!usuarioService.perteneceAGrupo(nuevoUsuario, grupo)) {
+            throw new RuntimeException("El usuario a asignar '" + nuevoUsuarioAsignadoUsername + "' no pertenece al grupo '" + grupo.getNombre() + "'.");
+        }
+
+        // 7. Actualizar el usuario asignado
         tareaAActualizar.setUsuarioAsignado(nuevoUsuario.getUsername());
 
-        // 6. Guardar el capítulo (las tareas se guardan en cascada)
+        // 8. Guardar el capítulo (las tareas se guardan en cascada)
         capituloRepository.save(capitulo);
     }
 

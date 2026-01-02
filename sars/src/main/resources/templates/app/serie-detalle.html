@@ -9,7 +9,7 @@
     <p th:text="${serie.descripcion}">Descripción de la serie</p>
     <hr>
 
-    <div sec:authorize="hasRole('ROLE_LIDER')">
+    <div th:if="${rolEnGrupoActual.name() == 'ROLE_LIDER'}">
         <div class="form-add-capitulo card p-3 mb-4">
             <h4 class="mb-3">Añadir Capítulos</h4>
             <form id="formCrearCapitulos" method="post" th:action="@{/serie/{nombreSerie}/capitulo/crear(nombreSerie=${serie.nombre})}">
@@ -137,15 +137,14 @@
 
     <div th:unless="${serie.capitulos.isEmpty()}">
             <div class="capitulo card mb-3" th:each="capitulo : ${serie.capitulos}" th:if="${capitulo != null}"
-                 th:with="ccTask=${capitulo.tareas.?[nombre == 'CC'][0]}, 
-                          ccCompleted=${ccTask != null and ccTask.estadoTarea == T(cc.sars.model.EstadosTareas).Completado},
-                          isLeader=${usuarioActual.role.name() == 'ROLE_LIDER'},
-                          isUser=${usuarioActual.role.name() == 'ROLE_USER'},
-                          isQC=${usuarioActual.role.name() == 'ROLE_QC'}"
-                 th:classappend="${ccCompleted ? 'border-success border-5' : ''}">        
+                                  th:with="ccTask=${capitulo.tareas.?[nombre == 'CC'][0]},
+                                           ccCompleted=${ccTask != null and ccTask.estadoTarea == T(cc.sars.model.EstadosTareas).Completado},
+                                           isLeader=${rolEnGrupoActual.name() == 'ROLE_LIDER'},
+                                           isUser=${rolEnGrupoActual.name() == 'ROLE_USER'},
+                                           isQC=${rolEnGrupoActual.name() == 'ROLE_QC'}"                 th:classappend="${ccCompleted ? 'border-success border-5' : ''}">        
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0" th:text="${capitulo.nombre}">Nombre del Capítulo</h5>
-            <form th:action="@{/serie/{nombreSerie}/capitulo/{nombreCapitulo}/eliminar(nombreSerie=${serie.nombre}, nombreCapitulo=${capitulo.nombre})}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este capítulo?');" sec:authorize="hasRole('ROLE_LIDER')">
+            <form th:action="@{/serie/{nombreSerie}/capitulo/{nombreCapitulo}/eliminar(nombreSerie=${serie.nombre}, nombreCapitulo=${capitulo.nombre})}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este capítulo?');" th:if="${rolEnGrupoActual.name() == 'ROLE_LIDER'}">
                 <button type="submit" class="btn btn-danger btn-sm">
                     <i class="bi bi-trash"></i>
                 </button>
@@ -195,7 +194,7 @@
                                 <!-- LÓGICA DE TAREAS REGULARES -->
                                 <th:block th:if="${tarea.nombre != 'CC'}">
                                     <!-- Opciones para LÍDER -->
-                                    <th:block th:if="${usuarioActual.role.name() == 'ROLE_LIDER'}">
+                                    <th:block th:if="${rolEnGrupoActual.name() == 'ROLE_LIDER'}">
                                         <option th:each="e : ${todosLosEstados}"
                                                 th:value="${e}"
                                                 th:text="${e}"
@@ -205,7 +204,7 @@
                                     </th:block>
 
                                     <!-- Opciones para USUARIO -->
-                                    <th:block th:if="${usuarioActual.role.name() == 'ROLE_USER' and (capitulo.tareas.?[nombre == 'CC'].empty or capitulo.tareas.?[nombre == 'CC'].![estadoTarea].get(0) != T(cc.sars.model.EstadosTareas).Completado)}">
+                                    <th:block th:if="${rolEnGrupoActual.name() == 'ROLE_USER' and (capitulo.tareas.?[nombre == 'CC'].empty or capitulo.tareas.?[nombre == 'CC'].![estadoTarea].get(0) != T(cc.sars.model.EstadosTareas).Completado)}">
                                         <option th:each="e : ${todosLosEstados}"
                                                 th:value="${e}"
                                                 th:text="${e}"
@@ -221,7 +220,7 @@
                                     </th:block>
 
                                     <!-- Opciones para USUARIO_CC -->
-                                    <th:block th:if="${usuarioActual.role.name() == 'ROLE_QC'}">
+                                    <th:block th:if="${rolEnGrupoActual.name() == 'ROLE_QC'}">
                                         <option th:each="e : ${todosLosEstados}"
                                                 th:value="${e}"
                                                 th:text="${e}"
@@ -246,7 +245,7 @@
                 </div>
 
                 <!-- Renderizar la tarea 'CC' al final, si existe -->
-                                    <div th:with="ccTask=${capitulo.tareas.?[nombre == 'CC'][0]}" sec:authorize="hasAnyRole('ROLE_LIDER', 'ROLE_QC')">                    <div th:if="${ccTask != null}"
+                                    <div th:with="ccTask=${capitulo.tareas.?[nombre == 'CC'][0]}" th:if="${rolEnGrupoActual.name() == 'ROLE_LIDER' or rolEnGrupoActual.name() == 'ROLE_QC'}">                    <div th:if="${ccTask != null}"
                          class="tarea-card card p-3 me-2 mb-2 border-5"
                          th:classappend="${ccTask.nombre == 'CC' and ccTask.estadoTarea.name() == 'NoAsignado' ? 'border-warning-subtle' : 
                                          (ccTask.estadoTarea.name() == 'Completado' ? 'border-success-subtle' : 
@@ -282,7 +281,7 @@
                                     <!-- LÓGICA DE TAREA CC -->
                                     <th:block th:if="${ccTask.nombre == 'CC'}">
                                         <!-- Opciones para LÍDER -->
-                                        <th:block th:if="${usuarioActual.role.name() == 'ROLE_LIDER'}">
+                                        <th:block th:if="${rolEnGrupoActual.name() == 'ROLE_LIDER'}">
                                             <option th:each="e : ${todosLosEstados}"
                                                     th:value="${e}"
                                                     th:text="${e}"
@@ -291,7 +290,7 @@
                                             </option>
                                         </th:block>
                                         <!-- Opciones para USUARIO_CC -->
-                                        <th:block th:if="${usuarioActual.role.name() == 'ROLE_QC'}">
+                                        <th:block th:if="${rolEnGrupoActual.name() == 'ROLE_QC'}">
                                             <option th:each="e : ${todosLosEstados}"
                                                     th:value="${e}"
                                                     th:text="${e}"
@@ -316,7 +315,7 @@
                     </div>
                 </div>
 
-                <div sec:authorize="hasRole('ROLE_LIDER')">
+                <div th:if="${rolEnGrupoActual.name() == 'ROLE_LIDER'}">
                     <div class="form-add-tarea card p-3 me-2 mb-2" style="border-style: dashed;">
                         <form method="post" th:action="@{/serie/{ns}/capitulo/{nc}/tarea/crear(ns=${serie.nombre}, nc=${capitulo.nombre})}">
                             <input type="text" class="form-control mb-2" name="nombreTarea" placeholder="Nueva Tarea" required>

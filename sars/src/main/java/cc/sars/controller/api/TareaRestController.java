@@ -1,17 +1,23 @@
 package cc.sars.controller.api;
 
+import cc.sars.controller.api.dto.TareaAsignacionUpdateDTO;
 import cc.sars.controller.api.dto.TareaCreateDTO;
 import cc.sars.controller.api.dto.TareaDTO;
+import cc.sars.controller.api.dto.TareaEstadoUpdateDTO;
 import cc.sars.controller.api.dto.TareaUpdateDTO;
 import cc.sars.exception.SerieNotFoundException;
 import cc.sars.model.Capitulo;
 import cc.sars.model.Serie;
 import cc.sars.model.Tarea;
+import cc.sars.model.User;
 import cc.sars.service.SerieService;
+import cc.sars.service.UsuarioService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,9 +29,11 @@ public class TareaRestController {
     private static final Logger log = LoggerFactory.getLogger(TareaRestController.class);
 
     private final SerieService serieService;
+    private final UsuarioService usuarioService;
 
-    public TareaRestController(SerieService serieService) {
+    public TareaRestController(SerieService serieService, UsuarioService usuarioService) {
         this.serieService = serieService;
+        this.usuarioService = usuarioService;
     }
 
     private Capitulo findCapituloOrThrow(String nombreGrupo, String nombreSerie, String nombreCapitulo) {
@@ -71,6 +79,34 @@ public class TareaRestController {
 
         Tarea tareaActualizada = serieService.updateTarea(nombreCapitulo, nombreTarea, tareaUpdateDTO.getEstado(), tareaUpdateDTO.getUsuarioAsignado());
         return new TareaDTO(tareaActualizada.getNombre(), tareaActualizada.getEstadoTarea(), tareaActualizada.getUsuarioAsignado());
+    }
+
+    @PutMapping("/{nombreTarea}/estado")
+    public TareaDTO updateTareaEstado(@PathVariable String nombreGrupo, @PathVariable String nombreCapitulo, @PathVariable String nombreTarea, @RequestBody TareaEstadoUpdateDTO estadoUpdateDTO) {
+        String username = estadoUpdateDTO.getUsername();
+        
+        log.info("Solicitud de '{}' para cambiar estado de la tarea '{}' en el capítulo '{}' a '{}'", username, nombreTarea, nombreCapitulo, estadoUpdateDTO.getNuevoEstado());
+        
+        Capitulo capituloActualizado = serieService.updateTareaEstado(nombreCapitulo, nombreTarea, estadoUpdateDTO.getNuevoEstado(), username);
+        
+        Tarea tareaActualizada = capituloActualizado.getTareas().stream()
+                .filter(t -> t.getNombre().equals(nombreTarea))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No se pudo encontrar la tarea recién actualizada"));
+
+        return new TareaDTO(tareaActualizada.getNombre(), tareaActualizada.getEstadoTarea(), tareaActualizada.getUsuarioAsignado());
+    }
+
+    @PutMapping("/{nombreTarea}/asignado")
+    public ResponseEntity<Void> asignarTarea(@PathVariable String nombreGrupo, @PathVariable String nombreSerie, @PathVariable String nombreCapitulo, @PathVariable String nombreTarea, @RequestBody TareaAsignacionUpdateDTO asignacionUpdateDTO) {
+        String liderUsername = asignacionUpdateDTO.getLiderUsername();
+        String asignadoUsername = asignacionUpdateDTO.getAsignadoUsername();
+
+        log.info("Solicitud del líder '{}' para asignar la tarea '{}' a '{}'", liderUsername, nombreTarea, asignadoUsername);
+
+        serieService.asignarUsuarioATarea(nombreSerie, nombreCapitulo, nombreTarea, asignadoUsername, liderUsername);
+
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{nombreTarea}")

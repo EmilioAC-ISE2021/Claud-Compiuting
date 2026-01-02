@@ -20,7 +20,7 @@
     <div class="row">
         <div class="col-md-5">
             <h4>Añadir Usuario al Grupo</h4>
-            <form th:action="@{/grupo/gestionar/agregar}" method="post" class="card p-3">
+            <form th:action="@{/grupo/{nombreGrupo}/gestionar/agregar(nombreGrupo=${grupo.nombre})}" method="post" class="card p-3">
                 <div class="mb-3">
                     <label for="nombreUsuario" class="form-label">Selecciona un usuario:</label>
                     <select class="form-select" id="nombreUsuario" name="nombreUsuario" required>
@@ -40,26 +40,26 @@
         <div class="col-md-7">
             <h4>Miembros Actuales del Grupo</h4>
             <ul class="list-group">
-                <li th:each="usuario : ${usuariosEnGrupo}" class="list-group-item d-flex justify-content-between align-items-center">
-                    <span th:text="${usuario.username}">username.miembro</span>
+                <li th:each="membresia : ${membresias}" class="list-group-item d-flex justify-content-between align-items-center">
+                    <span th:text="${membresia.usuario.username}">username.miembro</span>
                     
-                    <form th:action="@{/grupo/gestionar/cambiar-rol}" method="post" class="d-inline-flex align-items-center ms-auto">
-                        <input type="hidden" name="username" th:value="${usuario.username}">
+                    <form th:action="@{/grupo/{nombreGrupo}gestionar/cambiar-rol}" method="post" class="d-inline-flex align-items-center ms-auto">
+                        <input type="hidden" name="username" th:value="${membresia.usuario.username}">
                         <select name="newRole" class="form-select form-select-sm me-2" onchange="this.form.submit()">
                             <option th:each="role : ${rolesDisponibles}"
                                     th:value="${role}"
                                     th:text="${role.name() == 'ROLE_LIDER' ? 'Líder' : (role.name() == 'ROLE_USER' ? 'Usuario' : 'UsuarioCC')}"
-                                    th:selected="${role == usuario.role}">
+                                    th:selected="${role == membresia.rol}">
                                 Rol
                             </option>
                         </select>
                         <noscript><button type="submit" class="btn btn-sm btn-primary">Cambiar Rol</button></noscript>
                     </form>
-                    <form th:action="@{/grupo/gestionar/eliminarUsuario}" method="post" class="d-inline-flex ms-2">
+                    <form th:action="@{/grupo/{nombreGrupo}/gestionar/eliminarUsuario(nombreGrupo=${grupo.nombre})}" method="post" class="d-inline-flex ms-2">
                         <input type="hidden" name="nombreGrupo" th:value="${grupo.nombre}">
-                        <input type="hidden" name="username" th:value="${usuario.username}">
+                        <input type="hidden" name="username" th:value="${membresia.usuario.username}">
                         <button type="submit" class="btn btn-danger btn-sm"
-                                th:disabled="${(usuario.username == user.username) or (usuario.role.name() == 'ROLE_LIDER' and liderCount == 1)}"
+                                th:disabled="${(membresia.usuario.username == user.username) or (membresia.rol.name() == 'ROLE_LIDER' and liderCount == 1)}"
                                 th:onclick="return confirm('¿Estás seguro de que quieres eliminar a este usuario del grupo?');">
                             Eliminar
                         </button>

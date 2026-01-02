@@ -36,7 +36,21 @@
     <div th:unless="${usuarios.isEmpty()}">
         <ul class="list-group mb-4">
             <li th:each="usuario : ${usuarios}" class="list-group-item d-flex justify-content-between align-items-center">
-                <span th:text="${usuario.username}">Nombre de Usuario</span>
+                <div>
+                    <span th:text="${usuario.username}" class="fw-bold me-2">Nombre de Usuario</span>
+                    <span class="badge bg-info" th:text="${usuario.role.name()}">ROL_GLOBAL</span>
+                    <div th:if="${!usuario.usuarioGrupos.empty}">
+                        <small>Grupos:</small>
+                        <ul class="list-unstyled ms-3 mb-0">
+                            <li th:each="ug : ${usuario.usuarioGrupos}">
+                                <span th:text="${ug.grupo.nombre}">NombreGrupo</span>: <span th:text="${ug.rol.name()}" class="badge bg-secondary">ROL_EN_GRUPO</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div th:if="${usuario.usuarioGrupos.empty}">
+                        <small class="text-muted">No está en ningún grupo</small>
+                    </div>
+                </div>
                 <form th:action="@{/admin/usuario/eliminar}" method="post"
                       th:with="restriction=${userDeletionRestrictions.get(usuario.username)}">
                     <input type="hidden" name="username" th:value="${usuario.username}" />

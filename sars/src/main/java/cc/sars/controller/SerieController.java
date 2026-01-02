@@ -3,11 +3,16 @@ package cc.sars.controller;
 import cc.sars.model.EstadosTareas;
 import cc.sars.model.Serie;
 import cc.sars.model.User;
+import cc.sars.model.UsuarioGrupo;
+import cc.sars.model.UsuarioGrupoId;
+import cc.sars.repository.UsuarioGrupoRepository;
 import cc.sars.service.SerieService;
+import cc.sars.service.UsuarioService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,29 +22,39 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class SerieController {
 
     private static final Logger logger = LoggerFactory.getLogger(SerieController.class);
     private final SerieService serieService;
+    private final UsuarioGrupoRepository usuarioGrupoRepository;
+    private final UsuarioService usuarioService;
 
-    public SerieController(SerieService serieService) {
+    public SerieController(SerieService serieService, UsuarioGrupoRepository usuarioGrupoRepository, UsuarioService usuarioService) {
         this.serieService = serieService;
+        this.usuarioGrupoRepository = usuarioGrupoRepository;
+        this.usuarioService = usuarioService;
     }
 
     @PostMapping("/serie/crear")
+    @Transactional
     public String createSerie(@RequestParam String nombre,
                               @RequestParam String descripcion,
-                              @AuthenticationPrincipal User user) {
-        String nombreGrupo = user.getGrupos().stream()
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Usuario no tiene grupo"))
-                .getNombre();
+                              @AuthenticationPrincipal User user,
+                              HttpSession session) {
+        String nombreGrupo = (String) session.getAttribute("currentActiveGroup");
+
+        if (nombreGrupo == null) {
+            logger.error("No se pudo crear la serie porque no se encontró un grupo activo en la sesión para el usuario '{}'.", user.getUsername());
+            throw new IllegalStateException("No hay un grupo activo en la sesión para realizar la operación.");
+        }
+
         try {
             serieService.createSerie(nombre, descripcion, nombreGrupo);
         } catch (Exception e) {
-            logger.error("Error al crear serie '{}': {}", nombre, e.getMessage(), e);
+            logger.error("Error al crear serie '{}' en el grupo '{}': {}", nombre, nombreGrupo, e.getMessage(), e);
         }
         return "redirect:/";
     }
@@ -48,6 +63,10 @@ public class SerieController {
     public String getSerieDetalle(@PathVariable String nombreSerie, Model model, @AuthenticationPrincipal User usuarioActual) {
         Serie serie = serieService.getSerieByNombre(nombreSerie)
                 .orElseThrow(() -> new NoSuchElementException("Serie no encontrada: " + nombreSerie));
+        
+        UsuarioGrupoId usuarioGrupoId = new UsuarioGrupoId(usuarioActual.getUsername(), serie.getGrupo().getNombre());
+        UsuarioGrupo usuarioGrupoActual = usuarioGrupoRepository.findById(usuarioGrupoId)
+                .orElseThrow(() -> new RuntimeException("Error: No se encontró la membresía del usuario " + usuarioActual.getUsername() + " en el grupo " + serie.getGrupo().getNombre()));
         
         // Prepara una lista solo con los nombres de usuario para evitar problemas de serialización
         List<String> nombresUsuarios = serie.getGrupo().getUsuarios().stream()
@@ -58,6 +77,7 @@ public class SerieController {
         model.addAttribute("todosLosEstados", serieService.getTodosLosEstados());
         model.addAttribute("usuarioActual", usuarioActual);
         model.addAttribute("usuariosDelGrupo", nombresUsuarios); // Pasa la lista de nombres
+        model.addAttribute("rolEnGrupoActual", usuarioGrupoActual.getRol());
         return "app/serie-detalle";
     }
 
@@ -100,7 +120,7 @@ public class SerieController {
                                     @AuthenticationPrincipal User usuarioActual) { // Obtener usuario
         try {
             // Pasar el usuario al servicio
-            serieService.updateTareaEstado(nombreCapitulo, nombreTarea, estado, usuarioActual);
+            serieService.updateTareaEstado(nombreCapitulo, nombreTarea, estado, usuarioActual.getUsername());
         } catch (Exception e) {
             logger.error("Error al actualizar estado de tarea '{}' a '{}': {}", nombreTarea, estado, e.getMessage(), e);
         }
@@ -117,7 +137,7 @@ public class SerieController {
                                        @RequestParam String nuevoUsuarioAsignado,
                                        @AuthenticationPrincipal User usuarioActual) { // El líder que realiza la acción
         try {
-            serieService.asignarUsuarioATarea(nombreSerie, nombreCapitulo, nombreTarea, nuevoUsuarioAsignado, usuarioActual);
+            serieService.asignarUsuarioATarea(nombreSerie, nombreCapitulo, nombreTarea, nuevoUsuarioAsignado, usuarioActual.getUsername());
         } catch (Exception e) {
             logger.error("Error al asignar usuario '{}' a tarea '{}': {}", nuevoUsuarioAsignado, nombreTarea, e.getMessage(), e);
         }

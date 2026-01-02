@@ -3,13 +3,13 @@ package cc.sars.controller.api.dto;
 import cc.sars.model.Role;
 
 public class UserRoleUpdateDTO {
-    private Role rol;
+    private Role rolEnGrupo;
 
-    public Role getRol() {
-        return rol;
+    public Role getRolEnGrupo() {
+        return rolEnGrupo;
     }
 
-    public void setRol(Role rol) {
-        this.rol = rol;
+    public void setRolEnGrupo(Role rolEnGrupo) {
+        this.rolEnGrupo = rolEnGrupo;
     }
 }

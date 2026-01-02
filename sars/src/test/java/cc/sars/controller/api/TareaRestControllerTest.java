@@ -6,6 +6,7 @@ import cc.sars.model.EstadosTareas;
 import cc.sars.model.Serie;
 import cc.sars.model.Tarea;
 import cc.sars.service.SerieService;
+import cc.sars.service.UsuarioService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,9 @@ import org.springframework.http.MediaType;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import java.util.HashSet;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,21 +52,21 @@ public class TareaRestControllerTest {
 
     @MockBean
     private SerieService serieService;
+    @MockBean
+    private UsuarioService usuarioService;
 
     private static final String TEST_GROUP = "TestGroup";
     private static final String TEST_SERIE = "SerieA";
     private Serie serie;
     private Capitulo capitulo;
 
-    @BeforeEach
-    void setUp() {
-        serie = new Serie(TEST_SERIE, "Description");
-        capitulo = new Capitulo("Chapter 1");
-        serie.addCapitulo(capitulo);
-    }
+
 
     @Test
     void getTareasByCapitulo_shouldReturnTareas() throws Exception {
+        serie = new Serie(TEST_SERIE, "Description");
+        capitulo = new Capitulo("Chapter 1");
+        serie.addCapitulo(capitulo);
         // Given
         Tarea tarea1 = new Tarea("Task 1");
         tarea1.setEstadoTarea(EstadosTareas.NoAsignado);
@@ -83,15 +86,18 @@ public class TareaRestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].nombre", is("Task 1")))
-                .andExpect(jsonPath("$[0].estado", is("NoAsignado")))
+                .andExpect(jsonPath("$[0].estadoTarea", is("NoAsignado")))
                 .andExpect(jsonPath("$[0].usuarioAsignado", is("NADIE")))
                 .andExpect(jsonPath("$[1].nombre", is("Task 2")))
-                .andExpect(jsonPath("$[1].estado", is("Asignado")))
+                .andExpect(jsonPath("$[1].estadoTarea", is("Asignado")))
                 .andExpect(jsonPath("$[1].usuarioAsignado", is("user1")));
     }
 
     @Test
     void getTareasByCapitulo_shouldReturnNotFound_whenCapituloNotFound() throws Exception {
+        serie = new Serie(TEST_SERIE, "Description");
+        capitulo = new Capitulo("Chapter 1");
+        serie.addCapitulo(capitulo);
         // Given
         when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, TEST_SERIE)).thenReturn(Optional.of(serie));
 
@@ -102,6 +108,9 @@ public class TareaRestControllerTest {
 
     @Test
     void addTareaToCapitulo_shouldCreateTarea() throws Exception {
+        serie = new Serie(TEST_SERIE, "Description");
+        capitulo = new Capitulo("Chapter 1");
+        serie.addCapitulo(capitulo);
         // Given
         TareaCreateDTO tareaCreateDTO = new TareaCreateDTO("New Task");
         Capitulo updatedCapitulo = new Capitulo("Chapter 1");
@@ -120,6 +129,9 @@ public class TareaRestControllerTest {
 
     @Test
     void updateTarea_shouldUpdateTarea() throws Exception {
+        serie = new Serie(TEST_SERIE, "Description");
+        capitulo = new Capitulo("Chapter 1");
+        serie.addCapitulo(capitulo);
         // Given
         TareaUpdateDTO tareaUpdateDTO = new TareaUpdateDTO(EstadosTareas.Completado, "user2");
         Tarea updatedTarea = new Tarea("Task 1");
@@ -135,12 +147,15 @@ public class TareaRestControllerTest {
                 .content(objectMapper.writeValueAsString(tareaUpdateDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombre", is("Task 1")))
-                .andExpect(jsonPath("$.estado", is("Completado")))
+                .andExpect(jsonPath("$.estadoTarea", is("Completado")))
                 .andExpect(jsonPath("$.usuarioAsignado", is("user2")));
     }
 
     @Test
     void getTareaByNombre_shouldReturnTarea() throws Exception {
+        serie = new Serie(TEST_SERIE, "Description");
+        capitulo = new Capitulo("Chapter 1");
+        serie.addCapitulo(capitulo);
         // Given
         Tarea tarea = new Tarea("Task 1");
         tarea.setEstadoTarea(EstadosTareas.NoAsignado);
@@ -153,12 +168,15 @@ public class TareaRestControllerTest {
         mockMvc.perform(get("/api/grupos/{g}/series/{s}/capitulos/{c}/tareas/{t}", TEST_GROUP, TEST_SERIE, "Chapter 1", "Task 1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombre", is("Task 1")))
-                .andExpect(jsonPath("$.estado", is("NoAsignado")))
+                .andExpect(jsonPath("$.estadoTarea", is("NoAsignado")))
                 .andExpect(jsonPath("$.usuarioAsignado", is("NADIE")));
     }
 
     @Test
     void deleteTarea_shouldDeleteTarea() throws Exception {
+        serie = new Serie(TEST_SERIE, "Description");
+        capitulo = new Capitulo("Chapter 1");
+        serie.addCapitulo(capitulo);
         // Given
         when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, TEST_SERIE)).thenReturn(Optional.of(serie));
         // No specific setup needed for service method that returns void

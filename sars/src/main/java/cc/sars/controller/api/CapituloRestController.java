@@ -3,7 +3,7 @@ package cc.sars.controller.api;
 import cc.sars.controller.api.dto.CapituloCreateDTO;
 import cc.sars.controller.api.dto.CapituloDTO;
 import cc.sars.controller.api.dto.CapituloBulkCreateDTO;
-import cc.sars.controller.api.dto.TareaResponseDTO;
+import cc.sars.controller.api.dto.TareaDTO;
 import cc.sars.exception.SerieNotFoundException;
 import cc.sars.model.Capitulo;
 import cc.sars.model.Serie;
@@ -44,7 +44,7 @@ public class CapituloRestController {
                         capitulo.getNombre(),
                         nombreSerie,
                         capitulo.getTareas().stream()
-                                .map(tarea -> new TareaResponseDTO(tarea.getNombre(), tarea.getEstadoTarea(), tarea.getUsuarioAsignado()))
+                                .map(tarea -> new TareaDTO(tarea.getNombre(), tarea.getEstadoTarea(), tarea.getUsuarioAsignado()))
                                 .collect(Collectors.toList())
                 ))
                 .collect(Collectors.toList());
@@ -67,7 +67,7 @@ public class CapituloRestController {
                 capitulo.getNombre(),
                 nombreSerie,
                 capitulo.getTareas().stream()
-                        .map(tarea -> new TareaResponseDTO(tarea.getNombre(), tarea.getEstadoTarea(), tarea.getUsuarioAsignado()))
+                        .map(tarea -> new TareaDTO(tarea.getNombre(), tarea.getEstadoTarea(), tarea.getUsuarioAsignado()))
                         .collect(Collectors.toList())
         );
     }
@@ -87,7 +87,7 @@ public class CapituloRestController {
                 nuevoCapitulo.getNombre(),
                 nombreSerie,
                 nuevoCapitulo.getTareas().stream()
-                        .map(tarea -> new TareaResponseDTO(tarea.getNombre(), tarea.getEstadoTarea(), tarea.getUsuarioAsignado()))
+                        .map(tarea -> new TareaDTO(tarea.getNombre(), tarea.getEstadoTarea(), tarea.getUsuarioAsignado()))
                         .collect(Collectors.toList())
         );
     }
@@ -114,7 +114,7 @@ public class CapituloRestController {
                         capitulo.getNombre(),
                         nombreSerie,
                         capitulo.getTareas().stream()
-                                .map(tarea -> new TareaResponseDTO(tarea.getNombre(), tarea.getEstadoTarea(), tarea.getUsuarioAsignado()))
+                                .map(tarea -> new TareaDTO(tarea.getNombre(), tarea.getEstadoTarea(), tarea.getUsuarioAsignado()))
                                 .collect(Collectors.toList())
                 ))
                 .collect(Collectors.toList());

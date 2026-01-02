@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import cc.sars.model.User;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "grupo")
@@ -18,13 +20,8 @@ public class Grupo {
     @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Serie> series = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "grupo_usuarios",
-            joinColumns = @JoinColumn(name = "grupo_nombre"),
-            inverseJoinColumns = @JoinColumn(name = "user_username")
-    )
-    private Set<User> usuarios = new HashSet<>();
+    @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UsuarioGrupo> usuarioGrupos = new HashSet<>();
 
     // --- Constructores ---
     public Grupo() {
@@ -37,17 +34,18 @@ public class Grupo {
     public String getNombre() {
         return nombre;
     }
-    public Set<User> getUsuarios() { // Devuelve Set<User>
-        return usuarios;
+    public Set<UsuarioGrupo> getUsuarioGrupos() {
+        return usuarioGrupos;
     }
-    public void setUsuarios(Set<User> usuarios) {
-        this.usuarios = usuarios;
+
+    public void setUsuarioGrupos(Set<UsuarioGrupo> usuarioGrupos) {
+        this.usuarioGrupos = usuarioGrupos;
     }
-    public void agregarUsuario(User usuario) { // Acepta User
-        this.usuarios.add(usuario);
-    }
-    public void removeUsuario(User usuario) {
-        this.usuarios.remove(usuario);
+
+    public Set<User> getUsuarios() {
+        return this.usuarioGrupos.stream()
+                .map(UsuarioGrupo::getUsuario)
+                .collect(java.util.stream.Collectors.toSet());
     }
     
     public List<Serie> getSeries() {

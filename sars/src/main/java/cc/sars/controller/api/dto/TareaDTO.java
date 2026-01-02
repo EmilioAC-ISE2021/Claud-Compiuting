@@ -5,15 +5,15 @@ import cc.sars.model.EstadosTareas;
 public class TareaDTO {
 
     private String nombre;
-    private EstadosTareas estado;
+    private EstadosTareas estadoTarea;
     private String usuarioAsignado;
 
     public TareaDTO() {
     }
 
-    public TareaDTO(String nombre, EstadosTareas estado, String usuarioAsignado) {
+    public TareaDTO(String nombre, EstadosTareas estadoTarea, String usuarioAsignado) {
         this.nombre = nombre;
-        this.estado = estado;
+        this.estadoTarea = estadoTarea;
         this.usuarioAsignado = usuarioAsignado;
     }
 
@@ -25,12 +25,12 @@ public class TareaDTO {
         this.nombre = nombre;
     }
 
-    public EstadosTareas getEstado() {
-        return estado;
+    public EstadosTareas getEstadoTarea() {
+        return estadoTarea;
     }
 
-    public void setEstado(EstadosTareas estado) {
-        this.estado = estado;
+    public void setEstadoTarea(EstadosTareas estadoTarea) {
+        this.estadoTarea = estadoTarea;
     }
 
     public String getUsuarioAsignado() {

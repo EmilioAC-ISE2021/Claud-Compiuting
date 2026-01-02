@@ -45,14 +45,14 @@ public class AdminController {
             String restrictionMessage = "";
             if (user.getRole() == Role.ROLE_ADMIN) {
                 restrictionMessage = "No se puede eliminar a un usuario ADMIN.";
-            } else if (user.getRole() == Role.ROLE_LIDER) {
-                for (Grupo grupo : user.getGrupos()) {
-                    long liderCount = grupo.getUsuarios().stream()
-                            .filter(u -> u.getRole() == Role.ROLE_LIDER)
-                            .count();
-                    if (liderCount == 1 && grupo.getUsuarios().contains(user)) {
-                        restrictionMessage = "Es el único LIDER del grupo '" + grupo.getNombre() + "'. Elimine el grupo primero.";
-                        break; // Solo necesitamos una razón
+            } else { // Para usuarios que no son ADMIN, verificar liderazgo en grupos
+                for (cc.sars.model.UsuarioGrupo ug : user.getUsuarioGrupos()) {
+                    if (ug.getRol() == Role.ROLE_LIDER) {
+                        long liderCountInGroup = usuarioService.countLeadersInGroup(ug.getGrupo());
+                        if (liderCountInGroup <= 1) {
+                            restrictionMessage = "Es el único LIDER del grupo '" + ug.getGrupo().getNombre() + "'. Elimine el grupo primero.";
+                            break; // Solo necesitamos una razón
+                        }
                     }
                 }
             }

@@ -3,6 +3,8 @@ package cc.sars.controller.api;
 import cc.sars.config.SecurityConfig;
 import cc.sars.model.Serie;
 import cc.sars.service.SerieService;
+import cc.sars.service.UsuarioService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -15,9 +17,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -31,8 +36,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.Optional;
 
 @WebMvcTest(controllers = SerieRestController.class,
         excludeAutoConfiguration = SecurityAutoConfiguration.class)
@@ -48,7 +51,12 @@ public class SerieRestControllerTest {
     @MockBean
     private SerieService serieService;
 
+    @MockBean
+    private UsuarioService usuarioService;
+
     private static final String TEST_GROUP = "TestGroup";
+
+
 
     @Test
     void getSeriesByGrupo_shouldReturnListOfSeries() throws Exception {
@@ -63,9 +71,9 @@ public class SerieRestControllerTest {
         mockMvc.perform(get("/api/grupos/{nombreGrupo}/series", TEST_GROUP))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].nombreSerie", is("Serie A")))
+                .andExpect(jsonPath("$[0].nombre", is("Serie A")))
                 .andExpect(jsonPath("$[0].descripcion", is("Description A")))
-                .andExpect(jsonPath("$[1].nombreSerie", is("Serie B")))
+                .andExpect(jsonPath("$[1].nombre", is("Serie B")))
                 .andExpect(jsonPath("$[1].descripcion", is("Description B")));
     }
 
@@ -78,7 +86,7 @@ public class SerieRestControllerTest {
         // When & Then
         mockMvc.perform(get("/api/grupos/{nombreGrupo}/series/{nombreSerie}", TEST_GROUP, "Serie A"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombreSerie", is("Serie A")))
+                .andExpect(jsonPath("$.nombre", is("Serie A")))
                 .andExpect(jsonPath("$.descripcion", is("Description A")));
     }
 
@@ -105,7 +113,7 @@ public class SerieRestControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(serieCreateDTO)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.nombreSerie", is("New Serie")))
+                .andExpect(jsonPath("$.nombre", is("New Serie")))
                 .andExpect(jsonPath("$.descripcion", is("New Description")));
     }
 
@@ -122,7 +130,7 @@ public class SerieRestControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(serieUpdateDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombreSerie", is("Serie A")))
+                .andExpect(jsonPath("$.nombre", is("Serie A")))
                 .andExpect(jsonPath("$.descripcion", is("Updated Description")));
     }
 

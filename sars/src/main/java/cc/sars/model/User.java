@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import cc.sars.model.Grupo;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "sec_user") // Usamos 'sec_user' para evitar conflictos con 'user' en algunas BD
@@ -26,9 +28,8 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Role role; 
 
-    // Relación con 'Grupo'
-    @ManyToMany(mappedBy = "usuarios", fetch = FetchType.EAGER)
-    private Set<Grupo> grupos = new HashSet<>();
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UsuarioGrupo> usuarioGrupos = new HashSet<>();
 
     // --- Constructores ---
     public User() {
@@ -48,19 +49,18 @@ public class User implements UserDetails {
         this.role = role;
     }
 
+    public Set<UsuarioGrupo> getUsuarioGrupos() {
+        return usuarioGrupos;
+    }
+
+    public void setUsuarioGrupos(Set<UsuarioGrupo> usuarioGrupos) {
+        this.usuarioGrupos = usuarioGrupos;
+    }
+
     public Set<Grupo> getGrupos() {
-        return grupos;
-    }
-    public void setGrupos(Set<Grupo> grupos) {
-        this.grupos = grupos;
-    }
-    public void addGrupo(Grupo grupo) {
-        this.grupos.add(grupo);
-        grupo.getUsuarios().add(this);
-    }
-    public void removeGrupo(Grupo grupo) {
-        this.grupos.remove(grupo);
-        grupo.getUsuarios().remove(this);
+        return this.usuarioGrupos.stream()
+                .map(UsuarioGrupo::getGrupo)
+                .collect(java.util.stream.Collectors.toSet());
     }
     
     // --- Métodos Requeridos por UserDetails ---

@@ -1,10 +1,7 @@
 package cc.sars.controller.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class SerieDTO {
 
-    @JsonProperty("nombreSerie")
     private String nombre;
     private String descripcion;
 

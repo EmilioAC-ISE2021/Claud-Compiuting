@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
+import cc.sars.repository.UsuarioGrupoRepository;
+import cc.sars.model.UsuarioGrupo;
+import cc.sars.model.UsuarioGrupoId;
 import java.util.List;
 
 @Service
@@ -18,10 +21,12 @@ public class GrupoService {
 
     private final GrupoRepository grupoRepository;
     private final UserRepository userRepository;
+    private final UsuarioGrupoRepository usuarioGrupoRepository;
 
-    public GrupoService(GrupoRepository grupoRepository, UserRepository userRepository) {
+    public GrupoService(GrupoRepository grupoRepository, UserRepository userRepository, UsuarioGrupoRepository usuarioGrupoRepository) {
         this.grupoRepository = grupoRepository;
         this.userRepository = userRepository;
+        this.usuarioGrupoRepository = usuarioGrupoRepository;
     }
 
     /**
@@ -45,24 +50,35 @@ public class GrupoService {
     }
 
     /**
-     * Añade un usuario existente (por su username) a un grupo existente (por su nombre).
+     * Añade un usuario existente a un grupo con un rol por defecto.
      */
     public void agregarUsuarioAGrupo(String nombreUsuario, String nombreGrupo) {
+        agregarUsuarioAGrupo(nombreUsuario, nombreGrupo, Role.ROLE_USER);
+    }
+
+    /**
+     * Añade un usuario existente (por su username) a un grupo existente (por su nombre) con un rol específico.
+     */
+    public void agregarUsuarioAGrupo(String nombreUsuario, String nombreGrupo, Role rol) {
         Grupo grupo = getGrupoPorNombre(nombreGrupo);
         User usuario = userRepository.findByUsername(nombreUsuario)
                 .orElseThrow(() -> new RuntimeException("No se encontró el usuario: " + nombreUsuario));
 
-        // Verificar si el usuario es ADMIN
-        if (usuario.getRole() == Role.ROLE_ADMIN) {
-            throw new RuntimeException("Error: Los usuarios con rol ADMIN no pueden ser añadidos a grupos.");
+        // Eliminar este bloque para permitir que los ADMIN globales sean añadidos a grupos
+        // if (usuario.getRole() == Role.ROLE_ADMIN) {
+        //     throw new RuntimeException("Error: Los usuarios con rol ADMIN no pueden ser añadidos a grupos.");
+        // }
+
+        if (rol == Role.ROLE_ADMIN) {
+            throw new RuntimeException("Error: No se puede asignar el rol ADMIN dentro de un grupo.");
         }
 
-        grupo.agregarUsuario(usuario); // Añade el usuario a la colección del grupo
-        usuario.addGrupo(grupo);       // Añade el grupo a la colección del usuario (y también añade el usuario a la colección del grupo de nuevo)
+        UsuarioGrupo usuarioGrupo = new UsuarioGrupo();
+        usuarioGrupo.setUsuario(usuario);
+        usuarioGrupo.setGrupo(grupo);
+        usuarioGrupo.setRol(rol);
 
-        // Guarda ambas entidades para asegurar que los cambios persistan
-        grupoRepository.saveAndFlush(grupo); // Forzar el guardado para Grupo
-        userRepository.saveAndFlush(usuario); // Forzar el guardado para Usuario
+        usuarioGrupoRepository.save(usuarioGrupo);
     }
 
     @Transactional(readOnly = true)
@@ -77,33 +93,17 @@ public class GrupoService {
         Grupo grupo = getGrupoPorNombre(nombreGrupo);
         User usuario = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("No se encontró el usuario: " + username));
+        
+        UsuarioGrupoId usuarioGrupoId = new UsuarioGrupoId(usuario.getUsername(), grupo.getNombre());
 
-        if (!grupo.getUsuarios().contains(usuario)) {
-            throw new RuntimeException("El usuario " + username + " no pertenece al grupo " + grupo.getNombre());
-        }
+        usuarioGrupoRepository.findById(usuarioGrupoId)
+                .orElseThrow(() -> new RuntimeException("El usuario " + username + " no pertenece al grupo " + nombreGrupo));
 
-        grupo.removeUsuario(usuario); // Elimina el usuario de la colección del grupo
-        usuario.removeGrupo(grupo);   // Elimina el grupo de la colección del usuario
-
-        grupoRepository.saveAndFlush(grupo);
-        userRepository.saveAndFlush(usuario);
+        usuarioGrupoRepository.deleteById(usuarioGrupoId);
     }
 
     public void deleteGrupo(String nombreGrupo) {
         Grupo grupo = getGrupoPorNombre(nombreGrupo);
-
-        // Crear una copia del conjunto para evitar ConcurrentModificationException
-        Set<User> usuarios = new HashSet<>(grupo.getUsuarios());
-
-        // Eliminar todos los usuarios del grupo y restablecer sus roles
-        for (User usuario : usuarios) {
-            if (usuario != null) {
-                usuario.removeGrupo(grupo);
-                usuario.setRole(Role.ROLE_USER); // Restablecer rol a ROLE_USER
-                userRepository.save(usuario); // Guardar el usuario actualizado
-            }
-        }
-
         grupoRepository.delete(grupo);
     }
 }

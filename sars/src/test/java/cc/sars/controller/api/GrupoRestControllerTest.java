@@ -1,8 +1,11 @@
 package cc.sars.controller.api;
 
 import cc.sars.controller.api.dto.GrupoCreateDTO;
+import cc.sars.controller.api.dto.UserRoleUpdateDTO;
 import cc.sars.model.Grupo;
+import cc.sars.model.Role;
 import cc.sars.service.GrupoService;
+import cc.sars.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Arrays;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -37,6 +41,9 @@ public class GrupoRestControllerTest {
 
     @MockBean
     private GrupoService grupoService;
+
+    @MockBean
+    private UsuarioService usuarioService;
 
     private Grupo grupo1;
     private Grupo grupo2;
@@ -118,5 +125,29 @@ public class GrupoRestControllerTest {
         mockMvc.perform(delete("/api/grupos/GrupoC")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void cambiarRolMiembro_deberiaCambiarRol() throws Exception {
+        UserRoleUpdateDTO roleUpdateDTO = new UserRoleUpdateDTO();
+        roleUpdateDTO.setRolEnGrupo(Role.ROLE_LIDER);
+        doNothing().when(usuarioService).cambiarRolEnGrupo(anyString(), any(Role.class), anyString());
+
+        mockMvc.perform(put("/api/grupos/GrupoA/miembros/testuser/rol")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(roleUpdateDTO)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void cambiarRolMiembro_deberiaRetornarBadRequestEnError() throws Exception {
+        UserRoleUpdateDTO roleUpdateDTO = new UserRoleUpdateDTO();
+        roleUpdateDTO.setRolEnGrupo(Role.ROLE_LIDER);
+        doThrow(new RuntimeException("Error en el servicio")).when(usuarioService).cambiarRolEnGrupo(anyString(), any(Role.class), anyString());
+
+        mockMvc.perform(put("/api/grupos/GrupoA/miembros/testuser/rol")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(roleUpdateDTO)))
+                .andExpect(status().isBadRequest());
     }
 }

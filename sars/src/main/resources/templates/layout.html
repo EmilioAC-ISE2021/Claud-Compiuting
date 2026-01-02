@@ -17,13 +17,32 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <div class="collapse navbar-collapse justify-content-between align-items-center" id="navbarNav">
+                <ul class="navbar-nav mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="/">Inicio</a>
                     </li>
                     <!-- Otros enlaces de navegación si los hubiera -->
                 </ul>
+
+                <div sec:authorize="isAuthenticated()" 
+                     th:if="${gruposDelUsuario != null and not #lists.isEmpty(gruposDelUsuario)}"
+                     class="d-flex mx-auto">
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" onclick="this.nextElementSibling.classList.toggle('show')" aria-expanded="false">
+                            <span th:text="${currentActiveGroup != null ? currentActiveGroup.nombre : 'Seleccionar Grupo'}">Seleccionar Grupo</span>
+                        </button>
+                        <ul class="dropdown-menu" onclick="this.classList.remove('show')">
+                            <li th:each="grupo : ${gruposDelUsuario}">
+                                <form th:action="@{/cambiarGrupo}" method="post">
+                                    <input type="hidden" name="nombreGrupo" th:value="${grupo.nombre}" />
+                                    <button class="dropdown-item" type="submit" th:text="${grupo.nombre}"></button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
                 <div sec:authorize="isAuthenticated()">
                     <form th:action="@{/logout}" method="post" class="d-flex">
                         <button class="btn btn-outline-light" type="submit">Cerrar Sesión</button>

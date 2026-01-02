@@ -27,17 +27,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            .csrf(csrf -> csrf.disable())
             .userDetailsService(jpaUserDetailsService)
-            
-            // --- ¡CORRECCIÓN AQUÍ! ---
-            // El orden de las reglas de autorización importa.
+
             .authorizeHttpRequests(auth -> auth
                 
                 // 1. PRIMERO: Definimos las rutas públicas que CUALQUIERA puede ver.
                 .requestMatchers("/login", "/register", "/css/**", "/js/**", "/error", "/api/**").permitAll()
                 
                 // 2. LUEGO: Definimos las reglas específicas por ROL.
-                .requestMatchers("/grupo/gestionar/**").hasRole("LIDER") 
+                //OBSOLETO!!!!!! AHORA HAY ROLES POR GRUPO!!!
+                .requestMatchers("/grupo/*/gestionar/**").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN") 
                 
                 // 3. FINALMENTE: Decimos que CUALQUIER OTRA RUTA requiere autenticación.

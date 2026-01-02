@@ -1,13 +1,9 @@
 package cc.sars.controller.api.dto;
 
-public class GrupoCreateDTO {
-
+public class GrupoDTO {
     private String nombre;
 
-    public GrupoCreateDTO() {
-    }
-
-    public GrupoCreateDTO(String nombre) {
+    public GrupoDTO(String nombre) {
         this.nombre = nombre;
     }
 
