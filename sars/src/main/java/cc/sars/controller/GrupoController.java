@@ -6,6 +6,7 @@ import cc.sars.model.User;
 import cc.sars.model.UsuarioGrupo;
 import cc.sars.service.GrupoService;
 import cc.sars.service.UsuarioService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -198,5 +199,32 @@ public class GrupoController {
             logger.error("Error al eliminar grupo '{}': {}", nombreGrupo, e.getMessage(), e);
         }
         return "redirect:/";
+    }
+
+    @PostMapping("/grupo/crear")
+    @Transactional
+    public String crear(
+            @RequestParam("nombreGrupo") String nombreGrupo,
+            @AuthenticationPrincipal User user,
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
+
+        if (nombreGrupo == null || nombreGrupo.trim().isEmpty()) {
+            redirectAttributes.addFlashAttribute("error_message", "El nombre del grupo no puede estar vacío.");
+            return "redirect:/";
+        }
+
+        try {
+            grupoService.crearGrupoYAsignarLider(nombreGrupo, user.getUsername());
+            redirectAttributes.addFlashAttribute("success_message", "Grupo '" + nombreGrupo + "' creado exitosamente. Ahora eres el líder.");
+            
+            // Set active group in session
+            session.setAttribute("currentActiveGroup", nombreGrupo);
+
+            return "redirect:/";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error_message", "Error al crear el grupo: " + e.getMessage());
+            return "redirect:/";
+        }
     }
 }

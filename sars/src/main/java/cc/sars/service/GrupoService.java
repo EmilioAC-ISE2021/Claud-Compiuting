@@ -106,4 +106,18 @@ public class GrupoService {
         Grupo grupo = getGrupoPorNombre(nombreGrupo);
         grupoRepository.delete(grupo);
     }
+
+    /**
+     * Crea un nuevo grupo y asigna al usuario especificado como líder.
+     */
+    @Transactional
+    public Grupo crearGrupoYAsignarLider(String nombreGrupo, String usernameLider) {
+        // 1. Crear el grupo
+        Grupo nuevoGrupo = crearGrupo(nombreGrupo);
+
+        // 2. Asignar al usuario como líder del nuevo grupo
+        agregarUsuarioAGrupo(usernameLider, nombreGrupo, Role.ROLE_LIDER);
+
+        return nuevoGrupo;
+    }
 }

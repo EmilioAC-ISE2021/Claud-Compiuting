@@ -29,15 +29,20 @@
                      th:if="${gruposDelUsuario != null and not #lists.isEmpty(gruposDelUsuario)}"
                      class="d-flex mx-auto">
                     <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" onclick="this.nextElementSibling.classList.toggle('show')" aria-expanded="false">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <span th:text="${currentActiveGroup != null ? currentActiveGroup.nombre : 'Seleccionar Grupo'}">Seleccionar Grupo</span>
                         </button>
-                        <ul class="dropdown-menu" onclick="this.classList.remove('show')">
+                        <ul class="dropdown-menu">
                             <li th:each="grupo : ${gruposDelUsuario}">
                                 <form th:action="@{/cambiarGrupo}" method="post">
                                     <input type="hidden" name="nombreGrupo" th:value="${grupo.nombre}" />
                                     <button class="dropdown-item" type="submit" th:text="${grupo.nombre}"></button>
                                 </form>
+                            </li>
+                            <li sec:authorize="isAuthenticated()">
+                                <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#crearGrupoModal">
+                                    Crear Grupo
+                                </a>
                             </li>
                         </ul>
                     </div>
@@ -53,10 +58,42 @@
     </nav>
 
     <div class="container">
+        <div th:if="${success_message}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success_message}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error_message}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error_message}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
         <div th:replace="${content}">
             </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Modal Crear Grupo -->
+    <div class="modal fade" id="crearGrupoModal" tabindex="-1" aria-labelledby="crearGrupoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/grupo/crear}" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="crearGrupoModalLabel">Crear Nuevo Grupo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="nombreGrupo" class="form-label">Nombre del Grupo</label>
+                            <input type="text" class="form-control" id="nombreGrupo" name="nombreGrupo" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Crear Grupo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>
