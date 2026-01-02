@@ -4,7 +4,8 @@ import cc.sars.model.Grupo;
 import cc.sars.model.Role;
 import cc.sars.model.User;
 import cc.sars.service.GrupoService;
-import cc.sars.service.UsuarioService; // Importar UsuarioService
+import cc.sars.service.UsuarioService;
+import cc.sars.service.AdminService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,8 +16,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
-import java.util.Map; // Importar Map
-import java.util.HashMap; // Importar HashMap
+import java.util.Map;
+import java.util.HashMap;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -25,11 +26,13 @@ public class AdminController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
     private final GrupoService grupoService;
-    private final UsuarioService usuarioService; // Inyectar UsuarioService
+    private final UsuarioService usuarioService;
+    private final AdminService adminService; // Inyectar AdminService
 
-    public AdminController(GrupoService grupoService, UsuarioService usuarioService) { // Modificar constructor
+    public AdminController(GrupoService grupoService, UsuarioService usuarioService, AdminService adminService) {
         this.grupoService = grupoService;
         this.usuarioService = usuarioService;
+        this.adminService = adminService;
     }
 
     @GetMapping("/admin")
@@ -75,6 +78,7 @@ public class AdminController {
         return "redirect:/admin";
     }
 
+
     @PostMapping("/admin/usuario/eliminar") // Nuevo método para eliminar usuarios
     public String eliminarUsuario(@RequestParam String username, RedirectAttributes redirectAttributes) { // Cambiado a String username
         try {
@@ -86,4 +90,17 @@ public class AdminController {
         }
         return "redirect:/admin";
     }
+
+    @PostMapping("/admin/reset-database")
+    public String resetDatabase(RedirectAttributes redirectAttributes) {
+        try {
+            adminService.resetDatabase();
+            redirectAttributes.addFlashAttribute("success_message", "Base de datos reseteada correctamente.");
+        } catch (Exception e) {
+            logger.error("Error al resetear la base de datos: {}", e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("error_message", "Error al resetear la base de datos: " + e.getMessage());
+        }
+        return "redirect:/admin";
+    }
 }
+

@@ -6,6 +6,7 @@ import cc.sars.model.User;
 import cc.sars.model.UsuarioGrupo;
 import cc.sars.service.GrupoService;
 import cc.sars.service.UsuarioService;
+import cc.sars.exception.GrupoAlreadyExistsException; // ADDED IMPORT
 import jakarta.servlet.http.HttpSession;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -202,7 +203,6 @@ public class GrupoController {
     }
 
     @PostMapping("/grupo/crear")
-    @Transactional
     public String crear(
             @RequestParam("nombreGrupo") String nombreGrupo,
             @AuthenticationPrincipal User user,
@@ -222,8 +222,9 @@ public class GrupoController {
             session.setAttribute("currentActiveGroup", nombreGrupo);
 
             return "redirect:/";
-        } catch (RuntimeException e) {
-            redirectAttributes.addFlashAttribute("error_message", "Error al crear el grupo: " + e.getMessage());
+        } catch (GrupoAlreadyExistsException e) {
+            redirectAttributes.addFlashAttribute("error_message", "Ya existe un grupo con ese nombre.");
+            logger.warn("Intento de crear grupo con nombre existente: {}", nombreGrupo);
             return "redirect:/";
         }
     }

@@ -15,6 +15,8 @@ import cc.sars.model.UsuarioGrupo;
 import cc.sars.model.UsuarioGrupoId;
 import java.util.List;
 
+import cc.sars.exception.GrupoAlreadyExistsException;
+
 @Service
 @Transactional
 public class GrupoService {
@@ -43,7 +45,7 @@ public class GrupoService {
      */
     public Grupo crearGrupo(String nombreGrupo) {
         if (grupoRepository.findByNombre(nombreGrupo).isPresent()) {
-            throw new RuntimeException("Error: El grupo con el nombre '" + nombreGrupo + "' ya existe.");
+            throw new GrupoAlreadyExistsException("Error: El grupo con el nombre '" + nombreGrupo + "' ya existe.");
         }
         Grupo nuevoGrupo = new Grupo(nombreGrupo);
         return grupoRepository.save(nuevoGrupo);

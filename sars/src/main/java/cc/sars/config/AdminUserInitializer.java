@@ -23,4 +23,11 @@ public class AdminUserInitializer implements CommandLineRunner {
             usuarioService.createAdminUser("admin", "admin");
         }
     }
+
+    public void initializeAdminUser() {
+        if (usuarioService.findByUsername("admin").isEmpty()) {
+            System.out.println("Creando usuario administrador por defecto: admin/admin");
+            usuarioService.createAdminUser("admin", "admin");
+        }
+    }
 }

@@ -5,13 +5,7 @@
 <th:block th:fragment="content">
     <h2 class="mb-4">Panel de Administración</h2>
 
-    <!-- Mensajes de éxito/error -->
-    <div th:if="${success_message}" class="alert alert-success" role="alert">
-        <p th:text="${success_message}"></p>
-    </div>
-    <div th:if="${error_message}" class="alert alert-danger" role="alert">
-        <p th:text="${error_message}"></p>
-    </div>
+
 
     <h3>Gestionar Grupos</h3>
     <div th:if="${grupos.isEmpty()}" class="alert alert-info">
@@ -63,4 +57,23 @@
             </li>
         </ul>
     </div>
+
+    <h3 class="mt-5">Otras Acciones de Administración</h3>
+    <div class="card card-body bg-light">
+        <h5 class="card-title">Vaciar Base de Datos</h5>
+        <p class="card-text">Elimina todos los datos del sistema, excepto el usuario administrador. Esta acción es irreversible.</p>
+        <form th:action="@{/admin/reset-database}" method="post" onsubmit="return confirm('¡ATENCIÓN! ¿Estás seguro de que quieres vaciar COMPLETAMENTE la base de datos? Todos los datos se eliminarán de forma PERMANENTE. Esta acción es irreversible.') && confirm('¡ÚLTIMA ADVERTENCIA! ¿Estás 100% seguro? No hay vuelta atrás después de esto.');">
+            <button type="submit" class="btn btn-warning">Vaciar Base de Datos</button>
+        </form>
+    </div>
+</th:block>
+
+<script>
+    document.querySelector('form[th:action="@{/admin/reset-database}"]').onsubmit = function() {
+        if (!confirm('¡ATENCIÓN! ¿Estás absolutamente seguro de que quieres vaciar COMPLETAMENTE la base de datos? Esta acción eliminará TODOS los datos de forma PERMANENTE y es IRREVERSIBLE.')) {
+            return false;
+        }
+        return confirm('¡ÚLTIMA ADVERTENCIA! ¿Estás 100% seguro? No hay vuelta atrás después de esto.');
+    };
+</script>
 </th:block>
