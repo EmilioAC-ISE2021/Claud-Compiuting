@@ -18,15 +18,17 @@ services:
 
   app:
     build:
-      context: ./sars/
-      dockerfile: Dockerfile
+      context: ./sars
+      dockerfile: ../Dockerfile
+      no_cache: true
     container_name: sars-app
     image: sars-app
     depends_on:
       db:
         condition: service_healthy
-      app-tests:
-        condition: service_completed_successfully
+
+      fluent-bit:
+        condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sars
       SPRING_DATASOURCE_USERNAME: user
@@ -37,20 +39,10 @@ services:
     logging:
       driver: "fluentd"
       options:
-        fluentd-address: localhost:24224
+        fluentd-address: 127.0.0.1:24224
         tag: docker.sars-app
   
-  app-tests:
-    build:
-      context: ./sars/
-      dockerfile: Dockerfile
-      target: build
-    command: mvn test
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: localhost:24224
-        tag: docker.sars-tests
+
 
   fluent-bit:
     image: fluent/fluent-bit:1.9
@@ -60,6 +52,6 @@ services:
       - "24224:24224/udp"
     volumes:
       - ./fluent-bit:/fluent-bit/etc
-    
+
 volumes:
   postgres-data:

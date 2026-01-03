@@ -2,8 +2,8 @@
 FROM maven:3.8.7-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
-COPY src /src
-RUN mvn clean package
+COPY src /app/src
+RUN mvn clean test package
 
 # Stage 2: Run the application
 FROM eclipse-temurin:17-jre
