@@ -192,12 +192,16 @@ public class GrupoController {
         return "redirect:/grupo/" + nombreGrupo + "/gestionar";
     }
 
+
+
     @PostMapping("/grupo/eliminar")
-    public String deleteGrupo(@RequestParam String nombreGrupo) {
+    public String deleteGrupo(@RequestParam String nombreGrupo, RedirectAttributes redirectAttributes) {
         try {
             grupoService.deleteGrupo(nombreGrupo);
+            redirectAttributes.addFlashAttribute("success_message", "Grupo '" + nombreGrupo + "' eliminado correctamente.");
         } catch (Exception e) {
             logger.error("Error al eliminar grupo '{}': {}", nombreGrupo, e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("error_message", "Error al eliminar el grupo: " + e.getMessage());
         }
         return "redirect:/";
     }

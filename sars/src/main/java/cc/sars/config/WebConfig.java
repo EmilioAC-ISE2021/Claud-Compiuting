@@ -13,6 +13,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @ControllerAdvice
 public class WebConfig {
 
@@ -23,7 +25,15 @@ public class WebConfig {
     }
 
     @ModelAttribute
-    public void addGlobalAttributes(@AuthenticationPrincipal User user, Model model, HttpSession session) {
+    public void addGlobalAttributes(@AuthenticationPrincipal User user, Model model, HttpSession session, HttpServletRequest request) {
+        // Ignorar la lógica de currentActiveGroup si es una solicitud de eliminación de grupo
+        // para evitar problemas de concurrencia o acceso a entidades ya marcadas para eliminación.
+        if ("POST".equalsIgnoreCase(request.getMethod()) && "/grupo/eliminar".equals(request.getRequestURI())) {
+            model.addAttribute("gruposDelUsuario", Collections.emptySet()); // O manejar según sea necesario
+            model.addAttribute("currentActiveGroup", null); // Asegurarse de que no haya un grupo activo
+            return; 
+        }
+
         if (user != null) {
             Optional<User> fetchedUserOptional = usuarioService.findByUsername(user.getUsername());
             Set<Grupo> userGroups = Collections.emptySet();
