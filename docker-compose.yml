@@ -2,7 +2,7 @@ version: '3.8'
 services:
   app:
     container_name: sars-app
-    image: ghcr.io/TU_USUARIO/TU_REPO:latest
+    image: ghcr.io/emilioac-ise2021/claud-compiuting:main
     depends_on:
       db:
         condition: service_healthy
