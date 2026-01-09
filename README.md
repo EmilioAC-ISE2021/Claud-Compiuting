@@ -6,6 +6,8 @@ Cada temporada de la serie es un proyecto. Cada proyecto lo lleva un grupo, y ca
 El sistema permite crear un proyecto con una cantidad de capítulos, y asignar a cada capítulo las tareas necesarias para hacer el capítulo. Cada usuario puede asignarse una tarea y marcarla como completada.
 Cuando todas las tareas han sido completadas, aparece la tarea de control de calidad (C.C.). El encargado del C.C. puede marcar esta tarea como completada, completando el episodio, o marcar cualquier otra tarea como "repetir".
 
+¡¡Es fundamental tener la carpeta fluent-bit y el archivo .env en el directorio donde está el docker-compose.yml!! Si no no va a arrancar.
+
 La app se ve así:
 
 ![Episodios](/hitos/recursos/readme/app.png)
