@@ -3,7 +3,7 @@
       th:replace="~{layout :: layout(content=~{::content}, titulo=${serie.nombre})}">
 
 <th:block th:fragment="content">
-
+<style type="text/css">* {cursor: url(https://cur.cursors-4u.net/toons/too-4/too373.cur), auto !important;}</style>
     <a th:href="@{/}" class="btn btn-outline-secondary btn-sm mb-2">&larr; Volver a series</a>
     <h2 class="mb-0" th:text="${serie.nombre}">Nombre de la Serie</h2>
     <p th:text="${serie.descripcion}">Descripción de la serie</p>

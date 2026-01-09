@@ -1,26 +1,4 @@
-version: '3.8'
 services:
-  app:
-    container_name: sars-app
-    image: ghcr.io/emilioac-ise2021/claud-compiuting:main
-    depends_on:
-      db:
-        condition: service_healthy
-      fluent-bit:
-        condition: service_started
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sars
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-    ports:
-      - "8080:8080"
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: 127.0.0.1:24224
-        tag: docker.sars-app
-
   db:
     image: postgres:13
     container_name: sars-db
@@ -37,6 +15,34 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  app:
+    build:
+      context: ./sars
+      dockerfile: ../Dockerfile
+      no_cache: true
+    container_name: sars-app
+    image: sars-app
+    depends_on:
+      db:
+        condition: service_healthy
+
+      fluent-bit:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sars
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8080:8080"
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: 127.0.0.1:24224
+        tag: docker.sars-app
+  
+
 
   fluent-bit:
     image: fluent/fluent-bit:1.9
