@@ -5,7 +5,7 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: ./sars
-envVars:
+    envVars:
       - key: DB_HOST
         fromDatabase:
           name: sars-db
