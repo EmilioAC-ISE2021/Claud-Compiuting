@@ -6,30 +6,36 @@ services:
     region: frankfurt
     dockerfilePath: ./Dockerfile
     dockerContext: ./sars
-    
     healthCheckPath: /
     
     envVars:
       - key: JAVA_TOOL_OPTIONS
         value: "-Djava.net.preferIPv4Stack=true"
-
-      - key: PORT
-        value: "8080"
       - key: SERVER_PORT
         value: "8080"
-      
-      - key: SPRING_DATASOURCE_URL
-        value: jdbc:postgresql://sars-db:5432/sars?sslmode=disable
-        
-      - key: SPRING_DATASOURCE_USERNAME
+
+      - key: DB_HOST
+        fromDatabase:
+          name: sars-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: sars-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: sars-db
+          property: databaseName
+      - key: DB_USER
         fromDatabase:
           name: sars-db
           property: user
-      - key: SPRING_DATASOURCE_PASSWORD
+      - key: DB_PASSWORD
         fromDatabase:
           name: sars-db
           property: password
-          
+
+      # DDL Auto para producción
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
 
