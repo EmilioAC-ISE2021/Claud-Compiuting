@@ -10,13 +10,16 @@ services:
     healthCheckPath: /
     
     envVars:
+      - key: JAVA_TOOL_OPTIONS
+        value: "-Djava.net.preferIPv4Stack=true"
+
       - key: PORT
         value: "8080"
       - key: SERVER_PORT
         value: "8080"
       
       - key: SPRING_DATASOURCE_URL
-        value: jdbc:postgresql://sars-db:5432/sars
+        value: jdbc:postgresql://sars-db:5432/sars?sslmode=disable
         
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
