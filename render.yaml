@@ -3,6 +3,8 @@ services:
     name: sars-app
     runtime: docker
     plan: free
+    dockerfilePath: .
+    dockerContext: ./sars
     envVars:
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
