@@ -33,6 +33,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 
                 // 1. PRIMERO: Definimos las rutas públicas que CUALQUIERA puede ver.
+                .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/login", "/register", "/css/**", "/js/**", "/error", "/api/**").permitAll()
                 
                 // 2. LUEGO: Definimos las reglas específicas por ROL.
