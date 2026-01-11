@@ -3,17 +3,13 @@ services:
     name: sars-app
     runtime: docker
     plan: free
+    region: frankfurt
     dockerfilePath: ./Dockerfile
     dockerContext: ./sars
+    
+    healthCheckPath: /
+    
     envVars:
-      - key: DB_HOST
-        fromDatabase:
-          name: sars-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: sars-db
-          property: port
       - key: SPRING_DATASOURCE_URL
         value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/sars
       - key: SPRING_DATASOURCE_USERNAME
@@ -25,6 +21,11 @@ services:
           name: sars-db
           property: password
           
+      - key: SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT
+        value: "-1"
+      - key: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
+        value: "60000"
+        
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
       - key: SERVER_PORT
@@ -34,5 +35,5 @@ databases:
   - name: sars-db
     databaseName: sars
     user: user
-    plan: free # Recuerda: se borra a los 90 días si no pagas, perfecto para pruebas
-    region: frankfurt # Elige la región más cercana (oregon, frankfurt, etc.)
+    plan: free
+    region: frankfurt
