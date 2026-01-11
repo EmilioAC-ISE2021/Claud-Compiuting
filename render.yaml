@@ -9,7 +9,7 @@ services:
     
     healthCheckPath: /
     
-envVars:
+    envVars:
       - key: PORT
         value: "8080"
       - key: SERVER_PORT
