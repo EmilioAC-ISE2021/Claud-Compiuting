@@ -7,9 +7,7 @@ services:
     dockerContext: ./sars
     envVars:
       - key: SPRING_DATASOURCE_URL
-        fromDatabase:
-          name: sars-db
-          property: connectionString
+        value: jdbc:postgresql://sars-db:5432/sars
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: sars-db
