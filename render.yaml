@@ -5,9 +5,17 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: ./sars
-    envVars:
+envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: sars-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: sars-db
+          property: port
       - key: SPRING_DATASOURCE_URL
-        value: jdbc:postgresql://sars-db:5432/sars
+        value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/sars
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: sars-db
@@ -16,7 +24,7 @@ services:
         fromDatabase:
           name: sars-db
           property: password
-      
+          
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
       - key: SERVER_PORT
