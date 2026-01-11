@@ -3,6 +3,7 @@ services:
     name: sars-app
     runtime: docker
     plan: free
+    region: frankfurt
     dockerfilePath: ./Dockerfile
     dockerContext: ./sars
     
@@ -10,8 +11,7 @@ services:
     
     envVars:
       - key: SPRING_DATASOURCE_URL
-        value: jdbc:postgresql://sars-db:5432/sars
-
+        value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/sars
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: sars-db
@@ -21,13 +21,6 @@ services:
           name: sars-db
           property: password
 
-      - key: SPRING_DATASOURCE_LAZY_INITIALIZATION
-        value: "true"
-      
-      - key: SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT
-        value: "-1"
-      - key: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
-        value: "60000"
       
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
