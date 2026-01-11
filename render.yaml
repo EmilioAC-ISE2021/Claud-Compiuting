@@ -8,9 +8,10 @@ services:
     
     healthCheckPath: /
     
-    envVars:
+envVars:
       - key: SPRING_DATASOURCE_URL
-        value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/sars
+        value: jdbc:postgresql://sars-db:5432/sars
+
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: sars-db
@@ -18,15 +19,22 @@ services:
       - key: SPRING_DATASOURCE_PASSWORD
         fromDatabase:
           name: sars-db
-          property: password      
+          property: password
+
       - key: SPRING_DATASOURCE_LAZY_INITIALIZATION
-        value: "true"databases:
+        value: "true"
+      
       - key: SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT
         value: "-1"
       - key: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
         value: "60000"
-    
-        
+      
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - key: SERVER_PORT
+        value: 8080
+
+databases:
   - name: sars-db
     databaseName: sars
     user: user
