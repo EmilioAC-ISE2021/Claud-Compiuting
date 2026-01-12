@@ -9,6 +9,13 @@ services:
     healthCheckPath: /
     
     envVars:
+
+      - key: OTEL_SERVICE_NAME
+        value: sars-app
+      - key: MANAGEMENT_OTLP_METRICS_EXPORT_RESOURCE_ATTRIBUTES_SERVICE_NAME
+        value: sars-app
+
+
       - key: JAVA_TOOL_OPTIONS
         value: "-Djava.net.preferIPv4Stack=true"
       - key: PORT
@@ -24,7 +31,7 @@ services:
       - key: DB_NAME
         fromDatabase:
           name: sars-db
-          property: databaseName
+          property: database
 
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
