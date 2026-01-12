@@ -43,7 +43,7 @@
                 <li th:each="membresia : ${membresias}" class="list-group-item d-flex justify-content-between align-items-center">
                     <span th:text="${membresia.usuario.username}">username.miembro</span>
                     
-                    <form th:action="@{/grupo/{nombreGrupo}gestionar/cambiar-rol}" method="post" class="d-inline-flex align-items-center ms-auto">
+                    <form th:action="@{/grupo/{nombreGrupo}/gestionar/cambiar-rol(nombreGrupo=${grupo.nombre})}" method="post" class="d-inline-flex align-items-center ms-auto">
                         <input type="hidden" name="username" th:value="${membresia.usuario.username}">
                         <select name="newRole" class="form-select form-select-sm me-2" onchange="this.form.submit()">
                             <option th:each="role : ${rolesDisponibles}"
