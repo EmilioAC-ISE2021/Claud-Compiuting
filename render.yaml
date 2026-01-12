@@ -9,6 +9,13 @@ services:
     healthCheckPath: /
     
     envVars:
+
+      - key: OTEL_SERVICE_NAME
+        value: sars-app
+      - key: MANAGEMENT_OTLP_METRICS_EXPORT_RESOURCE_ATTRIBUTES_SERVICE_NAME
+        value: sars-app
+
+
       - key: JAVA_TOOL_OPTIONS
         value: "-Djava.net.preferIPv4Stack=true"
       - key: PORT
