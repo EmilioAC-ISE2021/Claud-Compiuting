@@ -6,7 +6,8 @@ Cada temporada de la serie es un proyecto. Cada proyecto lo lleva un grupo, y ca
 El sistema permite crear un proyecto con una cantidad de capítulos, y asignar a cada capítulo las tareas necesarias para hacer el capítulo. Cada usuario puede asignarse una tarea y marcarla como completada.
 Cuando todas las tareas han sido completadas, aparece la tarea de control de calidad (C.C.). El encargado del C.C. puede marcar esta tarea como completada, completando el episodio, o marcar cualquier otra tarea como "repetir".
 
-¡¡Es fundamental tener la carpeta fluent-bit y el archivo .env en el directorio donde está el docker-compose.yml!! Si no no va a arrancar.
+La app está alojada en sars-app.onrender.com
+Téngase en cuenta que si la app no se usa en 15 minutos, el servidor se apaga. Se puede seguir accediendo a la url, pero no se verá la aplicación hasta pasado un par de minutos. Después de esto ya funciona bien.
 
 La app se ve así:
 
@@ -19,4 +20,4 @@ La documentación de los hitos puede encontrarse aquí:
 [Hito 2](/hitos/2.md)
 [Hito 3](/hitos/3.md)
 [Hito 4](/hitos/4.md)
-[Hito 5](https://static.wikia.nocookie.net/doraemon/images/b/b4/The_doraemons_el_matadora_by_mugenmusouka-d4whi29_FROM_SPAIN.gif/revision/latest?cb=20131224141928&path-prefix=en)
+[Hito 5](/hitos/5.md)
