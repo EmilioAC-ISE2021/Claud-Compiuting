@@ -24,7 +24,7 @@ services:
       - key: DB_NAME
         fromDatabase:
           name: sars-db
-          property: databaseName
+          property: database
 
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
