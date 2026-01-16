@@ -1,7 +1,7 @@
 package cc.sars.model;
 
-import java.util.List;         
-import java.util.ArrayList;    
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -9,10 +9,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "serie")
+@Table(name = "serie", uniqueConstraints = @UniqueConstraint(columnNames = {"grupo_nombre", "nombre"}))
 public class Serie {
 
 	@Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
     @JsonProperty("nombreSerie")
     private String nombre;
 
@@ -55,6 +58,10 @@ public class Serie {
         capitulo.setSerie(null);
     }
 
+    public Integer getId() {
+        return id;
+    }
+
     public String getNombre() {
         return nombre;
     }
@@ -78,11 +85,11 @@ public class Serie {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Serie serie = (Serie) o;
-        return Objects.equals(nombre, serie.nombre);
+        return Objects.equals(id, serie.id);
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(nombre);
+        return Objects.hash(id);
     }
 }

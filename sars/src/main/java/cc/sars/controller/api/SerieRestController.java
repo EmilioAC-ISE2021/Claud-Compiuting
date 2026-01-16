@@ -3,6 +3,7 @@ package cc.sars.controller.api;
 import cc.sars.controller.api.dto.SerieCreateDTO;
 import cc.sars.controller.api.dto.SerieDTO;
 import cc.sars.controller.api.dto.SerieUpdateDTO;
+import cc.sars.exception.SerieAlreadyExistsException;
 import cc.sars.model.Serie;
 import cc.sars.service.SerieService;
 import org.slf4j.Logger;
@@ -64,6 +65,6 @@ public class SerieRestController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteSerie(@PathVariable String nombreGrupo, @PathVariable String nombreSerie) {
         log.info("Solicitud para eliminar serie: {} en el grupo {}", nombreSerie, nombreGrupo);
-        serieService.deleteSerieInGrupo(nombreGrupo, nombreSerie);
+        serieService.deleteSerie(nombreGrupo, nombreSerie);
     }
 }

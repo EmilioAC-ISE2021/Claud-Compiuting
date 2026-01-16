@@ -1,6 +1,5 @@
 package cc.sars.controller.api;
 
-import cc.sars.config.SecurityConfig;
 import cc.sars.controller.api.dto.CapituloCreateDTO;
 import cc.sars.controller.api.dto.CapituloBulkCreateDTO;
 import cc.sars.controller.api.dto.TareaCreateDTO;
@@ -20,11 +19,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;

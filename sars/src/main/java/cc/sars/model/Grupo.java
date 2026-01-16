@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import cc.sars.model.User;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "grupo")

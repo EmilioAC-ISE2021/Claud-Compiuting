@@ -1,5 +1,6 @@
 package cc.sars.service;
 
+import cc.sars.exception.SerieAlreadyExistsException;
 import cc.sars.exception.SerieNotFoundException;
 import cc.sars.model.Capitulo;
 import cc.sars.model.EstadosTareas;
@@ -55,51 +56,29 @@ public class SerieService {
     }
 
     /**
-     * Busca una serie específica por su nombre (ID).
-     */
-    @Transactional(readOnly = true)
-    public Optional<Serie> getSerieByNombre(String nombre) {
-        return serieRepository.findByNombre(nombre);
-    }
-
-    /**
      * Obtiene todas las series.
-     */
+     *
     @Transactional(readOnly = true)
     public List<Serie> buscarTodas() {
         return serieRepository.findAll();
     }
-
+    */
     /**
      * Crea una nueva serie y la asigna a un grupo.
      */
     public Serie createSerie(String nombre, String descripcion, String nombreGrupo) {
-        if (serieRepository.findByNombre(nombre).isPresent()) {
-            throw new RuntimeException("Error: La serie con el nombre '" + nombre + "' ya existe.");
-        }
-        
-        Grupo grupo = grupoRepository.findByNombre(nombreGrupo)
-                 .orElseThrow(() -> new SerieNotFoundException("Grupo no encontrado"));
 
+    	Grupo grupo = grupoRepository.findByNombre(nombreGrupo)
+                .orElseThrow(() -> new SerieNotFoundException("Grupo no encontrado"));
+    	
+    	if (serieRepository.findByGrupo_NombreAndNombre(nombreGrupo, nombre).isPresent()) {
+        	throw new SerieAlreadyExistsException("Error: La serie con el nombre '" + nombre + "' ya existe en el grupo '" + nombreGrupo + "'.");        }
+        
         Serie nuevaSerie = new Serie(nombre, descripcion);
         
-        // Llamada al método 'agregarSerie' de la entidad Grupo
         grupo.agregarSerie(nuevaSerie); 
         grupoRepository.save(grupo);
         return nuevaSerie;
-    }
-
-    public void deleteSerie(String nombreSerie) {
-        Serie serie = getSerieByNombre(nombreSerie)
-                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie));
-        serieRepository.delete(serie);
-    }
-
-    public Serie updateSerie(String nombre, String descripcion) {
-        Serie serie = getSerieByNombre(nombre)
-                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombre));
-        serie.setDescripcion(descripcion);
-        return serieRepository.save(serie);
     }
 
     /**
@@ -114,7 +93,7 @@ public class SerieService {
                 .findFirst();
     }
 
-    public void deleteSerieInGrupo(String nombreGrupo, String nombreSerie) {
+    public void deleteSerie(String nombreGrupo, String nombreSerie) {
         Grupo grupo = grupoRepository.findByNombre(nombreGrupo)
                 .orElseThrow(() -> new SerieNotFoundException("Grupo no encontrado: " + nombreGrupo));
         Serie serie = grupo.getSeries().stream()
@@ -149,89 +128,6 @@ public class SerieService {
         return capituloRepository.findByNombre(nombre);
     }
 
-    /**
-     * Crea un nuevo capítulo y lo añade a una serie existente.
-     */
-    public Serie addCapituloToSerie(String nombreSerie, String nombreCapitulo) {
-        Serie serie = getSerieByNombre(nombreSerie)
-                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie));
-
-        if (capituloRepository.findByNombre(nombreCapitulo).isPresent()) {
-             throw new RuntimeException("Error: El capítulo con el nombre '" + nombreCapitulo + "' ya existe.");
-        }
-
-        Capitulo nuevoCapitulo = new Capitulo(nombreCapitulo);
-        
-        // Añadir la tarea 'CC' por defecto
-        Tarea tareaCC = new Tarea("CC");
-        nuevoCapitulo.anyadirTarea(tareaCC);
-        
-        // Llamada al método 'addCapitulo' de la entidad Serie
-        serie.addCapitulo(nuevoCapitulo);
-
-        return serieRepository.save(serie);
-    }
-
-    /**
-     * Crea múltiples capítulos a partir de una cadena de nombres separados por saltos de línea
-     * y les asigna tareas en masa.
-     */
-    public Serie addCapitulosToSerie(String nombreSerie, String nombresCapitulos, String[] tareasEnMasa) {
-        Serie serie = getSerieByNombre(nombreSerie)
-                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie));
-
-        // Dividir la cadena de nombres de capítulos por saltos de línea y procesar cada uno
-        Arrays.stream(nombresCapitulos.split("\r?\n"))
-              .map(String::trim)
-              .filter(nombre -> !nombre.isEmpty())
-              .forEach(nombreCapitulo -> {
-                  if (capituloRepository.findByNombre(nombreCapitulo).isPresent()) {
-                      logger.warn("El capítulo con el nombre '{}' ya existe y será omitido.", nombreCapitulo);
-                      return; // Saltar este capítulo y continuar con el siguiente
-                  }
-
-                  Capitulo nuevoCapitulo = new Capitulo(nombreCapitulo);
-
-                  // Añadir las tareas en masa si existen
-                  if (tareasEnMasa != null) {
-                      Arrays.stream(tareasEnMasa)
-                            .map(String::trim)
-                            .filter(tareaData -> !tareaData.isEmpty())
-                            .forEach(tareaData -> {
-                                String[] parts = tareaData.split("###");
-                                if (parts.length == 3) {
-                                    String nombreTarea = parts[0];
-                                    EstadosTareas estadoTarea = EstadosTareas.valueOf(parts[1]);
-                                    String usuarioAsignado = parts[2];
-
-                                    Tarea nuevaTarea = new Tarea(nombreTarea);
-                                    nuevaTarea.setEstadoTarea(estadoTarea);
-                                    nuevaTarea.setUsuarioAsignado(usuarioAsignado);
-                                    nuevoCapitulo.anyadirTarea(nuevaTarea);
-                                } else {
-                                    logger.warn("Formato de tarea en masa incorrecto: {}", tareaData);
-                                }
-                            });
-                  }
-                  serie.addCapitulo(nuevoCapitulo);
-              });
-
-        return serieRepository.save(serie);
-    }
-
-    public void deleteCapitulo(String nombreSerie, String nombreCapitulo) {
-        Serie serie = getSerieByNombre(nombreSerie)
-                .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie));
-
-        Capitulo capitulo = serie.getCapitulos().stream()
-                .filter(c -> c.getNombre().equals(nombreCapitulo))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
-
-        serie.removeCapitulo(capitulo);
-        capituloRepository.delete(capitulo);
-        serieRepository.save(serie);
-    }
 
     /**
      * Crea un nuevo capítulo y lo añade a una serie existente, validando el grupo.
@@ -470,7 +366,7 @@ public class SerieService {
                         tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual); // Se auto-asigna
                     } else if (nuevoEstado == EstadosTareas.Completado) { // Permitir la finalización directa de tareas no asignadas/repetidas
                         tareaAActualizar.setUsuarioAsignado(nombreUsuarioActual); // Asignar al usuario actual
-                    }
+                    } 
                     else {
                         throw new RuntimeException("Solo puedes asignarte esta tarea.");
                     }

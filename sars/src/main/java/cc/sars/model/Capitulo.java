@@ -2,7 +2,7 @@ package cc.sars.model;
 
 
 import java.util.List;
-import java.util.ArrayList;    
+import java.util.ArrayList;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
@@ -13,7 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.OrderColumn; 
+import jakarta.persistence.OrderColumn;
 
 @Entity
 @Table(name = "capitulo")
@@ -23,13 +23,12 @@ public class Capitulo {
     @JsonProperty("nombreCapitulo")
     private String nombre;
 
-    @ManyToOne(fetch = FetchType.LAZY) 
-    @JoinColumn(name = "serie_nombre")
-    private Serie serie;
-
+        @ManyToOne(fetch = FetchType.LAZY) 
+        @JoinColumn(name = "serie_id")
+        private Serie serie;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
-        name = "capitulo_tareas", 
+        name = "capitulo_tareas",
         joinColumns = @JoinColumn(name = "capitulo_nombre")
     )
     @OrderColumn(name = "tarea_indice")
@@ -52,11 +51,11 @@ public class Capitulo {
     public void quitarTarea(Tarea t) {
         this.tareas.remove(t);
     }
-    
+
     public List<Tarea> getTareas() {
         return tareas;
     }
-    
+
     public String getNombre() {
         return nombre;
     }

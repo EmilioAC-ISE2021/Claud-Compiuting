@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/grupos/{nombreGrupo}/series/{nombreSerie}/capitulos")

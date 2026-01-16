@@ -60,8 +60,10 @@ public class SerieController {
     }
 
     @GetMapping("/serie/{nombreSerie}")
-    public String getSerieDetalle(@PathVariable String nombreSerie, Model model, @AuthenticationPrincipal User usuarioActual) {
-        Serie serie = serieService.getSerieByNombre(nombreSerie)
+    public String getSerieDetalle(@PathVariable String nombreSerie, Model model, @AuthenticationPrincipal User usuarioActual,
+    							  HttpSession session) {
+        String nombreGrupo = (String) session.getAttribute("currentActiveGroup");
+        Serie serie = serieService.getSerieByNombreAndGrupo(nombreGrupo, nombreSerie)
                 .orElseThrow(() -> new NoSuchElementException("Serie no encontrada: " + nombreSerie));
         
         UsuarioGrupoId usuarioGrupoId = new UsuarioGrupoId(usuarioActual.getUsername(), serie.getGrupo().getNombre());
@@ -84,9 +86,11 @@ public class SerieController {
     @PostMapping("/serie/{nombreSerie}/capitulo/crear")
     public String createCapitulo(@PathVariable String nombreSerie,
                                  @RequestParam String nombresCapitulos,
-                                 @RequestParam(required = false) String[] tareasEnMasa) {
+                                 @RequestParam(required = false) String[] tareasEnMasa,
+                                 HttpSession session) {
+        String nombreGrupo = (String) session.getAttribute("currentActiveGroup");
         try {
-            serieService.addCapitulosToSerie(nombreSerie, nombresCapitulos, tareasEnMasa);
+            serieService.addCapitulosToSerie(nombreGrupo, nombreSerie, nombresCapitulos, tareasEnMasa);
         } catch (Exception e) {
             logger.error("Error al crear capítulos para la serie '{}': {}", nombreSerie, e.getMessage(), e);
         }
@@ -146,9 +150,11 @@ public class SerieController {
 
     @PostMapping("/serie/{nombreSerie}/capitulo/{nombreCapitulo}/eliminar")
     public String deleteCapitulo(@PathVariable String nombreSerie,
-                                 @PathVariable String nombreCapitulo) {
+                                 @PathVariable String nombreCapitulo,
+                                 HttpSession session) {
+        String nombreGrupo = (String) session.getAttribute("currentActiveGroup");    	
         try {
-            serieService.deleteCapitulo(nombreSerie, nombreCapitulo);
+            serieService.deleteCapitulo(nombreGrupo, nombreSerie, nombreCapitulo);
         } catch (Exception e) {
             logger.error("Error al eliminar capítulo '{}' de la serie '{}': {}", nombreCapitulo, nombreSerie, e.getMessage(), e);
         }
@@ -156,9 +162,10 @@ public class SerieController {
     }
 
     @PostMapping("/serie/{nombreSerie}/eliminar")
-    public String deleteSerie(@PathVariable String nombreSerie) {
+    public String deleteSerie(@PathVariable String nombreSerie,
+    						  HttpSession session) {
+        String nombreGrupo = (String) session.getAttribute("currentActiveGroup");
         try {
-            serieService.deleteSerie(nombreSerie);
         } catch (Exception e) {
             logger.error("Error al eliminar serie '{}': {}", nombreSerie, e.getMessage(), e);
         }

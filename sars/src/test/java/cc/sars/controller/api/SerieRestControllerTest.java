@@ -1,28 +1,22 @@
 package cc.sars.controller.api;
 
-import cc.sars.config.SecurityConfig;
 import cc.sars.model.Serie;
 import cc.sars.service.SerieService;
 import cc.sars.service.UsuarioService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.HashSet;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -137,12 +131,12 @@ public class SerieRestControllerTest {
     @Test
     void deleteSerie_shouldDeleteSerie() throws Exception {
         // Given
-        doNothing().when(serieService).deleteSerieInGrupo(TEST_GROUP, "Serie A");
+        doNothing().when(serieService).deleteSerie(TEST_GROUP, "Serie A");
 
         // When & Then
         mockMvc.perform(delete("/api/grupos/{nombreGrupo}/series/{nombreSerie}", TEST_GROUP, "Serie A"))
                 .andExpect(status().isNoContent());
 
-        verify(serieService).deleteSerieInGrupo(TEST_GROUP, "Serie A");
+        verify(serieService).deleteSerie(TEST_GROUP, "Serie A");
     }
 }

@@ -7,12 +7,13 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface SerieRepository extends JpaRepository<Serie, String> {
+public interface SerieRepository extends JpaRepository<Serie, Integer> {
 
     /**
-     * Spring Data JPA creará automáticamente este método para
-     * buscar una Serie por su campo 'nombre' (que es nuestro ID).
-     * Es funcionalmente idéntico a findById().
+     * Busca una Serie por el nombre del grupo y el nombre de la serie.
+     * @param grupoNombre El nombre del grupo.
+     * @param nombre El nombre de la serie.
+     * @return Un Optional que contiene la Serie si se encuentra.
      */
-    Optional<Serie> findByNombre(String nombre);
+    Optional<Serie> findByGrupo_NombreAndNombre(String grupoNombre, String nombre);
 }
