@@ -124,8 +124,8 @@ public class SerieService {
      * Busca un capítulo específico por su nombre (ID).
      */
     @Transactional(readOnly = true)
-    public Optional<Capitulo> getCapituloByNombre(String nombre) {
-        return capituloRepository.findByNombre(nombre);
+    public Optional<Capitulo> getCapituloByNombre(String grupo, String serie, String nombre) {
+        return capituloRepository.findByNaturalKey(grupo, serie, nombre);
     }
 
 
@@ -136,7 +136,7 @@ public class SerieService {
         Serie serie = getSerieByNombreAndGrupo(nombreGrupo, nombreSerie)
                 .orElseThrow(() -> new SerieNotFoundException("No se encontró la serie: " + nombreSerie + " en el grupo: " + nombreGrupo));
 
-        if (capituloRepository.findByNombre(nombreCapitulo).isPresent()) {
+        if (capituloRepository.findByNaturalKey(nombreGrupo, nombreSerie, nombreCapitulo).isPresent()) {
              throw new RuntimeException("Error: El capítulo con el nombre '" + nombreCapitulo + "' ya existe.");
         }
 
@@ -164,7 +164,7 @@ public class SerieService {
               .map(String::trim)
               .filter(nombre -> !nombre.isEmpty())
               .forEach(nombreCapitulo -> {
-                  if (capituloRepository.findByNombre(nombreCapitulo).isPresent()) {
+                  if (capituloRepository.findByNaturalKey(nombreGrupo, nombreSerie, nombreCapitulo).isPresent()) {
                       logger.warn("El capítulo con el nombre '{}' ya existe y será omitido.", nombreCapitulo);
                       return; // Saltar este capítulo y continuar con el siguiente
                   }
@@ -243,8 +243,8 @@ public class SerieService {
      * Busca una tarea específica por su nombre dentro de un capítulo.
      */
     @Transactional(readOnly = true)
-    public Optional<Tarea> getTareaByNombre(String nombreCapitulo, String nombreTarea) {
-        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+    public Optional<Tarea> getTareaByNombre(String nombreGrupo, String nombreSerie, String nombreCapitulo, String nombreTarea) {
+        Capitulo capitulo = getCapituloByNombre(nombreGrupo, nombreSerie, nombreCapitulo)
                 .orElseThrow(() -> new SerieNotFoundException("No se encontró el capítulo: " + nombreCapitulo));
 
         return capitulo.getTareas().stream()
@@ -255,8 +255,8 @@ public class SerieService {
     /**
      * Crea una nueva tarea y la añade a un capítulo existente.
      */
-    public Capitulo addTareaToCapitulo(String nombreCapitulo, String nombreTarea) {
-        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+    public Capitulo addTareaToCapitulo(String nombreGrupo, String nombreSerie, String nombreCapitulo, String nombreTarea) {
+        Capitulo capitulo = getCapituloByNombre(nombreGrupo, nombreSerie, nombreCapitulo)
                 .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
 
         Tarea nuevaTarea = new Tarea(nombreTarea);
@@ -271,8 +271,8 @@ public class SerieService {
     /**
      * Elimina una tarea de un capítulo.
      */
-    public void deleteTarea(String nombreCapitulo, String nombreTarea) {
-        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+    public void deleteTarea(String nombreGrupo, String nombreSerie, String nombreCapitulo, String nombreTarea) {
+        Capitulo capitulo = getCapituloByNombre(nombreGrupo, nombreSerie, nombreCapitulo)
                 .orElseThrow(() -> new SerieNotFoundException("No se encontró el capítulo: " + nombreCapitulo));
 
         Tarea tareaAEliminar = capitulo.getTareas().stream()
@@ -285,8 +285,8 @@ public class SerieService {
     }
 
 
-    public Tarea updateTarea(String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado, String nuevoUsuarioAsignado) {
-        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+    public Tarea updateTarea(String nombreGrupo, String nombreSerie,  String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado, String nuevoUsuarioAsignado) {
+        Capitulo capitulo = getCapituloByNombre(nombreGrupo, nombreSerie, nombreCapitulo)
                 .orElseThrow(() -> new SerieNotFoundException("No se encontró el capítulo: " + nombreCapitulo));
 
         Tarea tareaAActualizar = capitulo.getTareas().stream()
@@ -304,8 +304,8 @@ public class SerieService {
      * Actualiza el estado de una tarea.
      * Gestiona la asignación (al usuario actual) y el bloqueo de la tarea.
      */
-        public Capitulo updateTareaEstado(String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado, String nombreUsuarioActual) {
-            Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+        public Capitulo updateTareaEstado(String nombreGrupo, String nombreSerie,  String nombreCapitulo, String nombreTarea, EstadosTareas nuevoEstado, String nombreUsuarioActual) {
+            Capitulo capitulo = getCapituloByNombre(nombreGrupo, nombreSerie, nombreCapitulo)
                     .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
             
             // Obtener el grupo asociado a la tarea
@@ -396,9 +396,9 @@ public class SerieService {
     /**
      * Asigna un usuario a una tarea específica. Solo un LÍDER puede realizar esta acción.
      */
-    public void asignarUsuarioATarea(String nombreSerie, String nombreCapitulo, String nombreTarea, String nuevoUsuarioAsignadoUsername, String liderUsername) {
+    public void asignarUsuarioATarea(String nombreGrupo, String nombreSerie, String nombreCapitulo, String nombreTarea, String nuevoUsuarioAsignadoUsername, String liderUsername) {
         // 1. Encontrar el capítulo, la serie y el grupo
-        Capitulo capitulo = getCapituloByNombre(nombreCapitulo)
+        Capitulo capitulo = getCapituloByNombre(nombreGrupo, nombreSerie, nombreCapitulo)
                 .orElseThrow(() -> new RuntimeException("No se encontró el capítulo: " + nombreCapitulo));
         
         Serie serie = capitulo.getSerie(); 

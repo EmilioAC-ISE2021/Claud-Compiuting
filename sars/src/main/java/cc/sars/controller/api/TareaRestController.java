@@ -29,11 +29,8 @@ public class TareaRestController {
     private static final Logger log = LoggerFactory.getLogger(TareaRestController.class);
 
     private final SerieService serieService;
-    private final UsuarioService usuarioService;
-
     public TareaRestController(SerieService serieService, UsuarioService usuarioService) {
         this.serieService = serieService;
-        this.usuarioService = usuarioService;
     }
 
     private Capitulo findCapituloOrThrow(String nombreGrupo, String nombreSerie, String nombreCapitulo) {
@@ -63,7 +60,7 @@ public class TareaRestController {
         // First, ensure the chapter exists in the hierarchy
         findCapituloOrThrow(nombreGrupo, nombreSerie, nombreCapitulo);
 
-        Capitulo capituloActualizado = serieService.addTareaToCapitulo(nombreCapitulo, tareaCreateDTO.getNombre());
+        Capitulo capituloActualizado = serieService.addTareaToCapitulo(nombreGrupo, nombreSerie, nombreCapitulo, tareaCreateDTO.getNombre());
         Tarea nuevaTarea = capituloActualizado.getTareas().stream()
                 .filter(t -> t.getNombre().equals(tareaCreateDTO.getNombre()))
                 .findFirst()
@@ -77,17 +74,17 @@ public class TareaRestController {
         // First, ensure the chapter exists in the hierarchy
         findCapituloOrThrow(nombreGrupo, nombreSerie, nombreCapitulo);
 
-        Tarea tareaActualizada = serieService.updateTarea(nombreCapitulo, nombreTarea, tareaUpdateDTO.getEstado(), tareaUpdateDTO.getUsuarioAsignado());
+        Tarea tareaActualizada = serieService.updateTarea(nombreGrupo, nombreSerie, nombreCapitulo, nombreTarea, tareaUpdateDTO.getEstado(), tareaUpdateDTO.getUsuarioAsignado());
         return new TareaDTO(tareaActualizada.getNombre(), tareaActualizada.getEstadoTarea(), tareaActualizada.getUsuarioAsignado());
     }
 
     @PutMapping("/{nombreTarea}/estado")
-    public TareaDTO updateTareaEstado(@PathVariable String nombreGrupo, @PathVariable String nombreCapitulo, @PathVariable String nombreTarea, @RequestBody TareaEstadoUpdateDTO estadoUpdateDTO) {
+    public TareaDTO updateTareaEstado(@PathVariable String nombreGrupo, @PathVariable String nombreSerie, @PathVariable String nombreCapitulo, @PathVariable String nombreTarea, @RequestBody TareaEstadoUpdateDTO estadoUpdateDTO) {
         String username = estadoUpdateDTO.getUsername();
         
         log.info("Solicitud de '{}' para cambiar estado de la tarea '{}' en el capítulo '{}' a '{}'", username, nombreTarea, nombreCapitulo, estadoUpdateDTO.getNuevoEstado());
         
-        Capitulo capituloActualizado = serieService.updateTareaEstado(nombreCapitulo, nombreTarea, estadoUpdateDTO.getNuevoEstado(), username);
+        Capitulo capituloActualizado = serieService.updateTareaEstado(nombreGrupo, nombreSerie, nombreCapitulo, nombreTarea, estadoUpdateDTO.getNuevoEstado(), username);
         
         Tarea tareaActualizada = capituloActualizado.getTareas().stream()
                 .filter(t -> t.getNombre().equals(nombreTarea))
@@ -104,7 +101,7 @@ public class TareaRestController {
 
         log.info("Solicitud del líder '{}' para asignar la tarea '{}' a '{}'", liderUsername, nombreTarea, asignadoUsername);
 
-        serieService.asignarUsuarioATarea(nombreSerie, nombreCapitulo, nombreTarea, asignadoUsername, liderUsername);
+        serieService.asignarUsuarioATarea(nombreGrupo, nombreSerie, nombreCapitulo, nombreTarea, asignadoUsername, liderUsername);
 
         return ResponseEntity.ok().build();
     }
@@ -115,7 +112,7 @@ public class TareaRestController {
         // First, ensure the chapter exists in the hierarchy
         findCapituloOrThrow(nombreGrupo, nombreSerie, nombreCapitulo);
 
-        Tarea tarea = serieService.getTareaByNombre(nombreCapitulo, nombreTarea)
+        Tarea tarea = serieService.getTareaByNombre(nombreGrupo, nombreSerie, nombreCapitulo, nombreTarea)
                 .orElseThrow(() -> new SerieNotFoundException("Tarea no encontrada con el nombre: " + nombreTarea + " en el capítulo: " + nombreCapitulo));
         return new TareaDTO(tarea.getNombre(), tarea.getEstadoTarea(), tarea.getUsuarioAsignado());
     }
@@ -127,6 +124,6 @@ public class TareaRestController {
         // First, ensure the chapter exists in the hierarchy
         findCapituloOrThrow(nombreGrupo, nombreSerie, nombreCapitulo);
         
-        serieService.deleteTarea(nombreCapitulo, nombreTarea);
+        serieService.deleteTarea(nombreGrupo, nombreSerie, nombreCapitulo, nombreTarea);
     }
 }

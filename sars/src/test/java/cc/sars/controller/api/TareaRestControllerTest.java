@@ -113,7 +113,7 @@ public class TareaRestControllerTest {
         updatedCapitulo.anyadirTarea(new Tarea("New Task"));
 
         when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, TEST_SERIE)).thenReturn(Optional.of(serie));
-        when(serieService.addTareaToCapitulo("Chapter 1", "New Task")).thenReturn(updatedCapitulo);
+                when(serieService.addTareaToCapitulo(TEST_GROUP, TEST_SERIE,"Chapter 1", "New Task")).thenReturn(updatedCapitulo);
 
         // When & Then
         mockMvc.perform(post("/api/grupos/{g}/series/{s}/capitulos/{c}/tareas", TEST_GROUP, TEST_SERIE, "Chapter 1")
@@ -135,7 +135,7 @@ public class TareaRestControllerTest {
         updatedTarea.setUsuarioAsignado("user2");
 
         when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, TEST_SERIE)).thenReturn(Optional.of(serie));
-        when(serieService.updateTarea("Chapter 1", "Task 1", EstadosTareas.Completado, "user2")).thenReturn(updatedTarea);
+                when(serieService.updateTarea(TEST_GROUP, TEST_SERIE, "Chapter 1", "Task 1", EstadosTareas.Completado, "user2")).thenReturn(updatedTarea);
 
         // When & Then
         mockMvc.perform(put("/api/grupos/{g}/series/{s}/capitulos/{c}/tareas/{t}", TEST_GROUP, TEST_SERIE, "Chapter 1", "Task 1")
@@ -158,7 +158,7 @@ public class TareaRestControllerTest {
         tarea.setUsuarioAsignado("NADIE");
 
         when(serieService.getSerieByNombreAndGrupo(TEST_GROUP, TEST_SERIE)).thenReturn(Optional.of(serie));
-        when(serieService.getTareaByNombre("Chapter 1", "Task 1")).thenReturn(Optional.of(tarea));
+                when(serieService.getTareaByNombre(TEST_GROUP, TEST_SERIE, "Chapter 1", "Task 1")).thenReturn(Optional.of(tarea));
 
         // When & Then
         mockMvc.perform(get("/api/grupos/{g}/series/{s}/capitulos/{c}/tareas/{t}", TEST_GROUP, TEST_SERIE, "Chapter 1", "Task 1"))

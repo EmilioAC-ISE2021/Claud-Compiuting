@@ -72,51 +72,69 @@ public class SerieServiceTest {
         assertThat(resultado).hasSize(2);
     }
 
-    /**
-     * Prueba que se puede crear una serie si se proporciona un grupo válido.
-     *
     @Test
     void testCreateSerie() {
         // ARRANGE
         String nombreSerie = "Nueva Serie";
-        Grupo grupoMock = mock(Grupo.class);
-        when(serieRepository.findByGrupo_NombreAndNombre(grupoMock.getNombre(),"MiSerie")).thenReturn(Optional.empty());
-        // ACT
-        serieService.createSerie(nombreSerie, "Desc", grupoMock.getNombre());
-        // ASSERT
-        verify(grupoMock).agregarSerie(any(Serie.class));
-        verify(grupoRepository).save(grupoMock);
-    }
-**/
-    /**
-     * Prueba que se puede añadir un capítulo a una serie existente.
-     *
-    @Test
-    void testAddCapituloToSerie() {        
-        // ARRANGE
-        Serie serieMock = mock(Serie.class);
-        Grupo grupoMock = mock(Grupo.class);
-        Grupo grupoSimulado= new Grupo("paco");
+        String desc = "Desc";
+        String grupoNombre = "MiGrupo";
+        Grupo grupo = new Grupo(grupoNombre);
 
-        when(serieRepository.findByGrupo_NombreAndNombre(grupoSimulado.getNombre(),"MiSerie")).thenReturn(Optional.of(serieMock));
-        when(capituloRepository.findByNombre("NuevoCap")).thenReturn(Optional.empty());
+        when(grupoRepository.findByNombre(grupoNombre)).thenReturn(Optional.of(grupo));
+        when(serieRepository.findByGrupo_NombreAndNombre(grupoNombre, nombreSerie)).thenReturn(Optional.empty());
+        when(grupoRepository.save(any(Grupo.class))).thenReturn(grupo);
+
         // ACT
-        serieService.addCapituloToSerie(grupoMock.getNombre(), "MiSerie", "NuevoCap");
+        Serie result = serieService.createSerie(nombreSerie, desc, grupoNombre);
+
         // ASSERT
-        verify(serieMock).addCapitulo(any(Capitulo.class));
-        verify(serieRepository).save(serieMock);
+        assertThat(result).isNotNull();
+        assertThat(result.getNombre()).isEqualTo(nombreSerie);
+        assertThat(result.getDescripcion()).isEqualTo(desc);
+        assertThat(grupo.getSeries()).contains(result);
+        verify(grupoRepository).save(grupo);
     }
-**/
+
+    @Test
+    void testAddCapituloToSerie() {
+        // ARRANGE
+        String grupoNombre = "MiGrupo";
+        String serieNombre = "MiSerie";
+        String capituloNombre = "NuevoCap";
+
+        Serie serie = new Serie(serieNombre, "desc");
+        Grupo grupo = new Grupo(grupoNombre);
+        grupo.agregarSerie(serie);
+
+        when(grupoRepository.findByNombre(grupoNombre)).thenReturn(Optional.of(grupo));
+        when(capituloRepository.findByNaturalKey(grupoNombre, serieNombre, capituloNombre)).thenReturn(Optional.empty());
+        when(serieRepository.save(any(Serie.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        // ACT
+        Serie result = serieService.addCapituloToSerie(grupoNombre, serieNombre, capituloNombre);
+
+        // ASSERT
+        assertThat(result.getCapitulos()).hasSize(1);
+        assertThat(result.getCapitulos().iterator().next().getNombre()).isEqualTo(capituloNombre);
+        verify(serieRepository).save(any(Serie.class));
+    }
+
     /**
      * Prueba que se puede añadir una tarea a un capítulo existente.
      */
     @Test
     void testAddTareaToCapitulo() {
         // ARRANGE
+        String grupo = "MiGrupo";
+        String serie = "MiSerie";
+        String capituloNombre = "MiCap";
+        String tareaNombre = "NuevaTarea";
         Capitulo capituloMock = mock(Capitulo.class);
-        when(capituloRepository.findByNombre("MiCap")).thenReturn(Optional.of(capituloMock));
+        when(capituloRepository.findByNaturalKey(grupo, serie, capituloNombre)).thenReturn(Optional.of(capituloMock));
+        
         // ACT
-        serieService.addTareaToCapitulo("MiCap", "NuevaTarea");
+        serieService.addTareaToCapitulo(grupo, serie, capituloNombre, tareaNombre);
+        
         // ASSERT
         verify(capituloMock).anyadirTarea(any(Tarea.class));
         verify(capituloRepository).save(capituloMock);
@@ -130,10 +148,15 @@ public class SerieServiceTest {
     @Test
     void testUpdateTareaEstado_Simple() {
         // ARRANGE
-        Tarea tareaReal = new Tarea("Tarea 1");
+        String grupoNombre = "MiGrupo";
+        String serieNombre = "MiSerie";
+        String capituloNombre = "MiCap";
+        String tareaNombre = "Tarea 1";
+
+        Tarea tareaReal = new Tarea(tareaNombre);
         Grupo mockGrupo = mock(Grupo.class);
         Serie mockSerie = mock(Serie.class);
-        Capitulo capituloReal = new Capitulo("MiCap");
+        Capitulo capituloReal = new Capitulo(capituloNombre);
 
         // Set the relationships directly
         capituloReal.setSerie(mockSerie);
@@ -141,13 +164,13 @@ public class SerieServiceTest {
         mockSerie.setGrupo(mockGrupo);
         capituloReal.anyadirTarea(tareaReal);
 
-        when(capituloRepository.findByNombre("MiCap")).thenReturn(Optional.of(capituloReal));
+        when(capituloRepository.findByNaturalKey(grupoNombre, serieNombre, capituloNombre)).thenReturn(Optional.of(capituloReal));
         when(usuarioService.findByUsername(usuarioSimuladoUser.getUsername())).thenReturn(Optional.of(usuarioSimuladoUser));
         when(usuarioService.esLiderEnGrupo(usuarioSimuladoUser, mockGrupo)).thenReturn(false);
 
         // ACT
-                    // Llamamos con el 4º argumento (el usuario)
-                    serieService.updateTareaEstado("MiCap", "Tarea 1", EstadosTareas.Completado, usuarioSimuladoUser.getUsername());
+        serieService.updateTareaEstado(grupoNombre, serieNombre, capituloNombre, tareaNombre, EstadosTareas.Completado, usuarioSimuladoUser.getUsername());
+        
         // ASSERT
         assertThat(tareaReal.getEstadoTarea()).isEqualTo(EstadosTareas.Completado);
         verify(capituloRepository).save(capituloReal);
@@ -159,11 +182,16 @@ public class SerieServiceTest {
     @Test
     void testUpdateTareaEstado_AsignacionAutomatica() {
         // ARRANGE
-        Tarea tareaReal = new Tarea("Tarea 1");
+        String grupoNombre = "MiGrupo";
+        String serieNombre = "MiSerie";
+        String capituloNombre = "MiCap";
+        String tareaNombre = "Tarea 1";
+
+        Tarea tareaReal = new Tarea(tareaNombre);
         assertThat(tareaReal.getUsuarioAsignado()).isEqualTo("NADIE");
         Grupo mockGrupo = mock(Grupo.class);
         Serie mockSerie = mock(Serie.class);
-        Capitulo capituloReal = new Capitulo("MiCap");
+        Capitulo capituloReal = new Capitulo(capituloNombre);
 
         // Set the relationships directly
         capituloReal.setSerie(mockSerie);
@@ -171,12 +199,12 @@ public class SerieServiceTest {
         mockSerie.setGrupo(mockGrupo);
         capituloReal.anyadirTarea(tareaReal);
 
-        when(capituloRepository.findByNombre("MiCap")).thenReturn(Optional.of(capituloReal));
+        when(capituloRepository.findByNaturalKey(grupoNombre, serieNombre, capituloNombre)).thenReturn(Optional.of(capituloReal));
         when(usuarioService.findByUsername(usuarioSimuladoUser.getUsername())).thenReturn(Optional.of(usuarioSimuladoUser));
         when(usuarioService.esLiderEnGrupo(usuarioSimuladoUser, mockGrupo)).thenReturn(false);
 
         // ACT
-        serieService.updateTareaEstado("MiCap", "Tarea 1", EstadosTareas.Asignado, usuarioSimuladoUser.getUsername());
+        serieService.updateTareaEstado(grupoNombre, serieNombre, capituloNombre, tareaNombre, EstadosTareas.Asignado, usuarioSimuladoUser.getUsername());
 
         // ASSERT
         // El estado de la tarea cambió
@@ -192,12 +220,17 @@ public class SerieServiceTest {
     @Test
     void testUpdateTareaEstado_Bloqueo() {
         // ARRANGE
-        Tarea tareaBloqueada = new Tarea("Tarea 1");
+        String grupoNombre = "MiGrupo";
+        String serieNombre = "MiSerie";
+        String capituloNombre = "MiCap";
+        String tareaNombre = "Tarea 1";
+        
+        Tarea tareaBloqueada = new Tarea(tareaNombre);
         tareaBloqueada.setUsuarioAsignado("OtroUsuario"); // La tarea ya es de alguien
 
         Grupo mockGrupo = mock(Grupo.class);
         Serie mockSerie = mock(Serie.class);
-        Capitulo capituloReal = new Capitulo("MiCap");
+        Capitulo capituloReal = new Capitulo(capituloNombre);
         
         // Set the relationships directly
         capituloReal.setSerie(mockSerie);
@@ -205,7 +238,7 @@ public class SerieServiceTest {
         mockSerie.setGrupo(mockGrupo);
         capituloReal.anyadirTarea(tareaBloqueada);
 
-        when(capituloRepository.findByNombre("MiCap")).thenReturn(Optional.of(capituloReal));
+        when(capituloRepository.findByNaturalKey(grupoNombre, serieNombre, capituloNombre)).thenReturn(Optional.of(capituloReal));
         when(usuarioService.findByUsername(usuarioSimuladoUser.getUsername())).thenReturn(Optional.of(usuarioSimuladoUser));
         when(usuarioService.esLiderEnGrupo(usuarioSimuladoUser, mockGrupo)).thenReturn(false);
 
@@ -213,7 +246,7 @@ public class SerieServiceTest {
         // Verificamos que si 'usuarioSimuladoUser' (que es "usuarioPrueba")
         // intenta cambiar la tarea de "OtroUsuario", el servicio lanza la excepción.
         assertThatThrownBy(() -> {
-            serieService.updateTareaEstado("MiCap", "Tarea 1", EstadosTareas.Completado, usuarioSimuladoUser.getUsername());
+            serieService.updateTareaEstado(grupoNombre, serieNombre, capituloNombre, tareaNombre, EstadosTareas.Completado, usuarioSimuladoUser.getUsername());
         })
         .isInstanceOf(RuntimeException.class)
         .hasMessage("No puedes cambiar el estado de una tarea asignada a OtroUsuario.");
@@ -228,13 +261,13 @@ public class SerieServiceTest {
     @Test
     void testQcCanMarkCompletedTaskAsRepetir() {
         // ARRANGE
+        String grupoNombre = "MiGrupo";
+        String serieNombre = "MiSerie";
         String capituloNombre = "CapituloQC4";
         String tareaNombre = "TareaQC4";
-        String otroUsuario = "OtroUsuario";
 
         Tarea tareaReal = new Tarea(tareaNombre);
         tareaReal.setEstadoTarea(EstadosTareas.Completado);
-
 
         Grupo mockGrupo = mock(Grupo.class);
         Serie mockSerie = mock(Serie.class);
@@ -247,14 +280,14 @@ public class SerieServiceTest {
         capituloReal.setSerie(mockSerie);
         capituloReal.anyadirTarea(tareaReal);
 
-        when(capituloRepository.findByNombre(capituloNombre)).thenReturn(Optional.of(capituloReal));
+        when(capituloRepository.findByNaturalKey(grupoNombre, serieNombre, capituloNombre)).thenReturn(Optional.of(capituloReal));
         when(capituloRepository.save(any(Capitulo.class))).thenReturn(capituloReal);
         when(usuarioService.findByUsername(usuarioSimuladoQC.getUsername())).thenReturn(Optional.of(usuarioSimuladoQC));
         when(usuarioService.esLiderEnGrupo(usuarioSimuladoQC, mockGrupo)).thenReturn(false);
         when(usuarioService.esQcEnGrupo(usuarioSimuladoQC, mockGrupo)).thenReturn(true);
 
         // ACT
-        serieService.updateTareaEstado(capituloNombre, tareaNombre, EstadosTareas.Repetir, usuarioSimuladoQC.getUsername());
+        serieService.updateTareaEstado(grupoNombre, serieNombre, capituloNombre, tareaNombre, EstadosTareas.Repetir, usuarioSimuladoQC.getUsername());
 
         // ASSERT
         assertThat(tareaReal.getEstadoTarea()).isEqualTo(EstadosTareas.Repetir);
@@ -269,25 +302,27 @@ public class SerieServiceTest {
     @Test
     void testQcCannotChangeStatusOfTaskAssignedToAnotherUserExceptRepetir() {
         // ARRANGE
+        String grupoNombre = "MiGrupo";
+        String serieNombre = "MiSerie";
         String capituloNombre = "CapituloQC5";
         String tareaNombre = "TareaQC5";
         String otroUsuario = "OtroUsuario";
 
-                    Tarea tareaReal = new Tarea(tareaNombre);
-                    tareaReal.setEstadoTarea(EstadosTareas.Asignado); // Not "Completado"
-                    tareaReal.setUsuarioAsignado(otroUsuario);
-        
-                    Grupo mockGrupo = mock(Grupo.class);
-                    Serie mockSerie = mock(Serie.class);
-                    // Set the relationships directly
-                    when(mockSerie.getGrupo()).thenReturn(mockGrupo); // Explicitly stub getGrupo()
-                    mockSerie.setGrupo(mockGrupo);
+        Tarea tareaReal = new Tarea(tareaNombre);
+        tareaReal.setEstadoTarea(EstadosTareas.Asignado); // Not "Completado"
+        tareaReal.setUsuarioAsignado(otroUsuario);
+
+        Grupo mockGrupo = mock(Grupo.class);
+        Serie mockSerie = mock(Serie.class);
+        // Set the relationships directly
+        when(mockSerie.getGrupo()).thenReturn(mockGrupo); // Explicitly stub getGrupo()
+        mockSerie.setGrupo(mockGrupo);
         Capitulo capituloReal = new Capitulo(capituloNombre);
         // Set the relationships directly
         capituloReal.setSerie(mockSerie);
         capituloReal.anyadirTarea(tareaReal);
 
-        when(capituloRepository.findByNombre(capituloNombre)).thenReturn(Optional.of(capituloReal));
+        when(capituloRepository.findByNaturalKey(grupoNombre, serieNombre, capituloNombre)).thenReturn(Optional.of(capituloReal));
         when(usuarioService.findByUsername(usuarioSimuladoQC.getUsername())).thenReturn(Optional.of(usuarioSimuladoQC));
         when(usuarioService.esLiderEnGrupo(usuarioSimuladoQC, mockGrupo)).thenReturn(false);
         when(usuarioService.esQcEnGrupo(usuarioSimuladoQC, mockGrupo)).thenReturn(true);
@@ -295,14 +330,14 @@ public class SerieServiceTest {
         // ACT & ASSERT
         // Try to change to Completado
         assertThatThrownBy(() -> {
-            serieService.updateTareaEstado(capituloNombre, tareaNombre, EstadosTareas.Completado, usuarioSimuladoQC.getUsername());
+            serieService.updateTareaEstado(grupoNombre, serieNombre, capituloNombre, tareaNombre, EstadosTareas.Completado, usuarioSimuladoQC.getUsername());
         })
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("No puedes cambiar el estado de una tarea asignada a " + otroUsuario);
 
         // Try to change to NoAsignado
         assertThatThrownBy(() -> {
-            serieService.updateTareaEstado(capituloNombre, tareaNombre, EstadosTareas.NoAsignado, usuarioSimuladoQC.getUsername());
+            serieService.updateTareaEstado(grupoNombre, serieNombre, capituloNombre, tareaNombre, EstadosTareas.NoAsignado, usuarioSimuladoQC.getUsername());
         })
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("No puedes cambiar el estado de una tarea asignada a " + otroUsuario);
@@ -316,6 +351,8 @@ public class SerieServiceTest {
     @Test
     void testQcCannotChangeStatusIfCCTaskIsCompleted() {
         // ARRANGE
+        String grupoNombre = "MiGrupo";
+        String serieNombre = "MiSerie";
         String capituloNombre = "CapituloQC6";
         String tareaNormalNombre = "TareaNormalQC6";
         String ccTareaNombre = "CC";
@@ -339,10 +376,10 @@ public class SerieServiceTest {
         capituloReal.anyadirTarea(ccTarea);
         capituloReal.anyadirTarea(tareaNormal);
 
-        when(capituloRepository.findByNombre(capituloNombre)).thenReturn(Optional.of(capituloReal));
+        when(capituloRepository.findByNaturalKey(grupoNombre, serieNombre, capituloNombre)).thenReturn(Optional.of(capituloReal));
         when(usuarioService.findByUsername(usuarioSimuladoQC.getUsername())).thenReturn(Optional.of(usuarioSimuladoQC));
         assertThatThrownBy(() -> {
-            serieService.updateTareaEstado(capituloNombre, tareaNormalNombre, EstadosTareas.Asignado, usuarioSimuladoQC.getUsername());
+            serieService.updateTareaEstado(grupoNombre, serieNombre, capituloNombre, tareaNormalNombre, EstadosTareas.Asignado, usuarioSimuladoQC.getUsername());
         })
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("No puedes cambiar el estado de las tareas en este capítulo porque la tarea 'CC' está completada.");
@@ -356,6 +393,8 @@ public class SerieServiceTest {
     @Test
     void testUserCannotChangeStatusIfCCTaskIsCompleted() {
         // ARRANGE
+        String grupoNombre = "MiGrupo";
+        String serieNombre = "MiSerie";
         String capituloNombre = "CapituloUserCC";
         String tareaNormalNombre = "TareaNormalUserCC";
         String ccTareaNombre = "CC";
@@ -379,13 +418,13 @@ public class SerieServiceTest {
         capituloReal.anyadirTarea(ccTarea);
         capituloReal.anyadirTarea(tareaNormal);
 
-        when(capituloRepository.findByNombre(capituloNombre)).thenReturn(Optional.of(capituloReal));
+        when(capituloRepository.findByNaturalKey(grupoNombre, serieNombre, capituloNombre)).thenReturn(Optional.of(capituloReal));
         when(usuarioService.findByUsername(usuarioSimuladoUser.getUsername())).thenReturn(Optional.of(usuarioSimuladoUser));
 
 
         // ACT & ASSERT
         assertThatThrownBy(() -> {
-            serieService.updateTareaEstado(capituloNombre, tareaNormalNombre, EstadosTareas.Asignado, usuarioSimuladoUser.getUsername());
+            serieService.updateTareaEstado(grupoNombre, serieNombre, capituloNombre, tareaNormalNombre, EstadosTareas.Asignado, usuarioSimuladoUser.getUsername());
         })
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("No puedes cambiar el estado de las tareas en este capítulo porque la tarea 'CC' está completada.");

@@ -8,10 +8,6 @@
         <div class="col-md-7">
             <h2 class="mb-4">Crear Cuenta</h2>
 
-            <div th:if="${error_message}" class="alert alert-danger" role="alert">
-                [[${error_message}]]
-            </div>
-
             <form th:action="@{/register}" method="post">
                 
                 <div class="mb-3">

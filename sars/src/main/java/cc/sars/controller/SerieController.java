@@ -43,7 +43,8 @@ public class SerieController {
     public String createSerie(@RequestParam String nombre,
                               @RequestParam String descripcion,
                               @AuthenticationPrincipal User user,
-                              HttpSession session) {
+                              HttpSession session,
+                              org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         String nombreGrupo = (String) session.getAttribute("currentActiveGroup");
 
         if (nombreGrupo == null) {
@@ -53,8 +54,12 @@ public class SerieController {
 
         try {
             serieService.createSerie(nombre, descripcion, nombreGrupo);
+        } catch (cc.sars.exception.SerieAlreadyExistsException e) {
+            logger.warn("Intento de crear una serie duplicada '{}' en el grupo '{}' por el usuario '{}'.", nombre, nombreGrupo, user.getUsername());
+            redirectAttributes.addFlashAttribute("error_message", e.getMessage());
         } catch (Exception e) {
-            logger.error("Error al crear serie '{}' en el grupo '{}': {}", nombre, nombreGrupo, e.getMessage(), e);
+            logger.error("Error inesperado al crear serie '{}' en el grupo '{}': {}", nombre, nombreGrupo, e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("error_message", "Ocurrió un error inesperado al crear la serie.");
         }
         return "redirect:/";
     }
@@ -103,9 +108,10 @@ public class SerieController {
     @PostMapping("/serie/{nombreSerie}/capitulo/{nombreCapitulo}/tarea/crear")
     public String createTarea(@PathVariable String nombreSerie,
                               @PathVariable String nombreCapitulo,
-                              @RequestParam String nombreTarea) {
+                              @RequestParam String nombreTarea, HttpSession session) {
+        String nombreGrupo = (String) session.getAttribute("currentActiveGroup");
         try {
-            serieService.addTareaToCapitulo(nombreCapitulo, nombreTarea);
+            serieService.addTareaToCapitulo(nombreGrupo, nombreSerie, nombreCapitulo, nombreTarea);
         } catch (Exception e) {
             logger.error("Error al crear tarea '{}' en capítulo '{}': {}", nombreTarea, nombreCapitulo, e.getMessage(), e);
         }
@@ -121,10 +127,11 @@ public class SerieController {
                                     @PathVariable String nombreCapitulo,
                                     @PathVariable String nombreTarea,
                                     @RequestParam EstadosTareas estado,
-                                    @AuthenticationPrincipal User usuarioActual) { // Obtener usuario
+                                    @AuthenticationPrincipal User usuarioActual, HttpSession session) { // Obtener usuario
+        String nombreGrupo = (String) session.getAttribute("currentActiveGroup");
         try {
             // Pasar el usuario al servicio
-            serieService.updateTareaEstado(nombreCapitulo, nombreTarea, estado, usuarioActual.getUsername());
+            serieService.updateTareaEstado(nombreGrupo, nombreSerie, nombreCapitulo, nombreTarea, estado, usuarioActual.getUsername());
         } catch (Exception e) {
             logger.error("Error al actualizar estado de tarea '{}' a '{}': {}", nombreTarea, estado, e.getMessage(), e);
         }
@@ -139,9 +146,10 @@ public class SerieController {
                                        @PathVariable String nombreCapitulo,
                                        @PathVariable String nombreTarea,
                                        @RequestParam String nuevoUsuarioAsignado,
-                                       @AuthenticationPrincipal User usuarioActual) { // El líder que realiza la acción
+                                       @AuthenticationPrincipal User usuarioActual, HttpSession session) { // El líder que realiza la acción
+        String nombreGrupo = (String) session.getAttribute("currentActiveGroup");
         try {
-            serieService.asignarUsuarioATarea(nombreSerie, nombreCapitulo, nombreTarea, nuevoUsuarioAsignado, usuarioActual.getUsername());
+            serieService.asignarUsuarioATarea(nombreGrupo, nombreSerie, nombreCapitulo, nombreTarea, nuevoUsuarioAsignado, usuarioActual.getUsername());
         } catch (Exception e) {
             logger.error("Error al asignar usuario '{}' a tarea '{}': {}", nuevoUsuarioAsignado, nombreTarea, e.getMessage(), e);
         }
@@ -163,11 +171,15 @@ public class SerieController {
 
     @PostMapping("/serie/{nombreSerie}/eliminar")
     public String deleteSerie(@PathVariable String nombreSerie,
-    						  HttpSession session) {
+                              HttpSession session,
+                              org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         String nombreGrupo = (String) session.getAttribute("currentActiveGroup");
         try {
+            serieService.deleteSerie(nombreGrupo, nombreSerie);
+            redirectAttributes.addFlashAttribute("success_message", "Serie '" + nombreSerie + "' eliminada correctamente.");
         } catch (Exception e) {
             logger.error("Error al eliminar serie '{}': {}", nombreSerie, e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("error_message", "Error al eliminar la serie: " + e.getMessage());
         }
         return "redirect:/";
     }
