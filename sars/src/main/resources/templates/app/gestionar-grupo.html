@@ -40,7 +40,8 @@
                     
                     <form th:action="@{/grupo/{nombreGrupo}/gestionar/cambiar-rol(nombreGrupo=${grupo.nombre})}" method="post" class="d-inline-flex align-items-center ms-auto">
                         <input type="hidden" name="username" th:value="${membresia.usuario.username}">
-                        <select name="newRole" class="form-select form-select-sm me-2" onchange="this.form.submit()">
+                        <select name="newRole" class="form-select form-select-sm me-2" onchange="this.form.submit()"
+                                th:disabled="${membresia.rol.name() == 'ROLE_LIDER' and liderCount == 1}">
                             <option th:each="role : ${rolesDisponibles}"
                                     th:value="${role}"
                                     th:text="${role.name() == 'ROLE_LIDER' ? 'Líder' : (role.name() == 'ROLE_USER' ? 'Usuario' : 'UsuarioCC')}"

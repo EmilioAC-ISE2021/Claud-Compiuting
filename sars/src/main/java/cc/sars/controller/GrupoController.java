@@ -145,7 +145,13 @@ public class GrupoController {
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("error_message", e.getMessage());
         }
-        return "redirect:/grupo/" + nombreGrupo + "/gestionar";
+        esLiderDelGrupo = usuarioActual.getUsuarioGrupos().stream()
+                .anyMatch(ug -> ug.getGrupo().getNombre().equals(nombreGrupo) && ug.getRol() == Role.ROLE_LIDER);
+        
+        if (esLiderDelGrupo) 
+        	return "redirect:/grupo/" + nombreGrupo + "/gestionar";
+        else
+            return "redirect:/";
     }
 
     /**
